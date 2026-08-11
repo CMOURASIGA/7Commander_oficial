@@ -1,0 +1,1164 @@
+# 7C COMMANDER + KAIROS
+## User Stories Completas de Desenvolvimento
+
+---
+
+# OBJETIVO
+
+Transformar o 7C Commander em uma plataforma operacional com inteligência contextual integrada através do Kairos.
+
+O Kairos será:
+- parceiro profissional inteligente
+- voice-first
+- orientado a projetos
+- contextual
+- persistente
+- integrado ao frontend e backend do 7C Commander
+
+---
+
+# FASE 1 – FUNDAÇÃO E REESTRUTURAÇÃO
+
+# US-001 – Reestruturar arquitetura do 7C Commander
+
+## Objetivo
+Preparar o projeto atual para suportar o Kairos.
+
+---
+
+## Tarefas Técnicas
+
+- revisar estrutura atual do frontend
+- revisar backend atual
+- revisar dependências Google Drive/Sheets
+- criar nova arquitetura modular
+- preparar integração Supabase
+- separar serviços cognitivos
+
+---
+
+## Critérios de Aceite
+
+- arquitetura modular criada
+- estrutura preparada para Kairos
+- build sem erros
+- serviços separados corretamente
+
+---
+
+# US-002 – Configurar Supabase como base principal
+
+## Objetivo
+Migrar persistência principal para Supabase.
+
+---
+
+## Tarefas Técnicas
+
+- configurar projeto Supabase
+- configurar autenticação backend
+- configurar pgvector
+- criar clients frontend/backend
+- criar migrations
+
+---
+
+## Critérios de Aceite
+
+- Supabase conectado
+- pgvector funcionando
+- variáveis protegidas
+- conexão funcionando frontend/backend
+
+---
+
+# US-003 – Criar estrutura de banco de dados
+
+## Objetivo
+Criar base cognitiva e operacional.
+
+---
+
+## Tabelas obrigatórias
+
+```text
+clients
+projects
+project_statuses
+conversations
+messages
+memories
+memory_embeddings
+knowledge_base
+knowledge_chunks
+knowledge_embeddings
+decisions
+tasks
+risks
+artifacts
+agent_runs
+voice_sessions
+```
+
+---
+
+## Critérios de Aceite
+
+- tabelas criadas
+- relacionamentos funcionando
+- constraints corretas
+- indexes criados
+
+---
+
+# FASE 2 – NOVA HOME DO 7C COMMANDER
+
+# US-004 – Redesenhar Home principal
+
+## Objetivo
+Transformar a Home em uma interface centrada no Kairos.
+
+---
+
+## Tarefas Técnicas
+
+### Manter
+- menu lateral
+- estrutura geral
+- login atual
+
+---
+
+### Alterar
+- remover excesso de cards
+- simplificar dashboard
+- centralizar Kairos
+
+---
+
+## Critérios de Aceite
+
+- Home simplificada
+- Kairos centralizado
+- layout responsivo
+- UX mais limpa
+
+---
+
+# US-005 – Criar Kairos Voice Interface
+
+## Objetivo
+Criar interface principal de conversa por voz.
+
+---
+
+## Componentes obrigatórios
+
+- animação/avatar Kairos
+- status visual
+- captura de voz
+- feedback de áudio
+- botão iniciar conversa
+- botão pausar
+- botão finalizar
+
+---
+
+## Estados
+
+```text
+Inativo
+Ouvindo
+Pensando
+Respondendo
+Erro
+```
+
+---
+
+## Critérios de Aceite
+
+- interface funcional
+- estados funcionando
+- feedback visual correto
+- experiência responsiva
+
+---
+
+# US-006 – Criar indicadores TO DO / DOING / DONE
+
+## Objetivo
+Exibir status resumido dos projetos.
+
+---
+
+## Indicadores
+
+```text
+TO DO
+DOING
+DONE
+```
+
+---
+
+## Critérios de Aceite
+
+- indicadores atualizados dinamicamente
+- dados corretos
+- visualização clara
+
+---
+
+# FASE 3 – EXPERIÊNCIA VOICE-FIRST
+
+# US-007 – Implementar captura de voz
+
+## Objetivo
+Permitir conversa por voz com Kairos.
+
+---
+
+## Tarefas Técnicas
+
+- capturar microfone
+- solicitar permissões
+- detectar início/fim de fala
+- controlar sessão de voz
+
+---
+
+## Critérios de Aceite
+
+- microfone funcionando
+- captura estável
+- falhas tratadas
+- usuário consegue iniciar/parar conversa
+
+---
+
+# US-008 – Implementar Speech-to-Text
+
+## Objetivo
+Converter voz em texto.
+
+---
+
+## Tarefas Técnicas
+
+- integrar OpenAI STT
+- converter áudio
+- retornar transcrição
+- salvar transcrição
+
+---
+
+## Critérios de Aceite
+
+- transcrição correta
+- baixa latência
+- erros tratados
+
+---
+
+# US-009 – Implementar OpenAI TTS
+
+## Objetivo
+Permitir respostas por voz.
+
+---
+
+## Variáveis
+
+```env
+OPENAI_API_KEY=
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_TTS_VOICE=sage
+```
+
+---
+
+## Tarefas Técnicas
+
+- criar `/api/voice`
+- gerar mp3
+- reproduzir áudio
+- controlar playback
+
+---
+
+## Critérios de Aceite
+
+- Kairos responde com voz
+- áudio reproduz corretamente
+- erros tratados
+
+---
+
+# FASE 4 – KAIROS CORE
+
+# US-010 – Criar Kairos Core
+
+## Objetivo
+Criar núcleo cognitivo principal.
+
+---
+
+## Estrutura
+
+```text
+/services/kairos-core.ts
+```
+
+---
+
+## Responsabilidades
+
+- interpretar intenção
+- carregar Prompt Mestre
+- identificar projeto
+- recuperar memória
+- recuperar conhecimento
+- ativar módulos
+- gerar resposta
+- salvar contexto
+
+---
+
+## Critérios de Aceite
+
+- Core funcional
+- resposta contextual correta
+- integração completa
+
+---
+
+# US-011 – Integrar Prompt Mestre PM AI Partner
+
+## Objetivo
+Transformar o PM AI Partner no núcleo do Kairos.
+
+---
+
+## Tarefas Técnicas
+
+- carregar prompt mestre
+- aplicar regras
+- aplicar guardrails
+- combinar contexto
+
+---
+
+## Critérios de Aceite
+
+- respostas seguem prompt mestre
+- projetos tratados isoladamente
+- regras respeitadas
+
+---
+
+# FASE 5 – PROJECT RESOLVER
+
+# US-012 – Criar Project Resolver
+
+## Objetivo
+Identificar automaticamente o projeto correto.
+
+---
+
+## Estrutura
+
+```text
+/services/project-resolver.ts
+```
+
+---
+
+## Funcionalidades
+
+- identificar projeto existente
+- calcular confiança
+- sugerir novo projeto
+- recuperar projeto ativo
+
+---
+
+## Critérios de Aceite
+
+- projeto correto identificado
+- contexto isolado
+- baixa mistura de projetos
+
+---
+
+# US-013 – Criar gerenciamento de projetos
+
+## Objetivo
+Persistir e organizar projetos.
+
+---
+
+## Funcionalidades
+
+- criar projeto
+- editar projeto
+- trocar status
+- listar projetos
+- carregar projeto ativo
+
+---
+
+## Critérios de Aceite
+
+- projetos persistidos
+- dados corretos
+- status funcionando
+
+---
+
+# FASE 6 – MEMÓRIA E CONHECIMENTO
+
+# US-014 – Criar Memory Layer
+
+## Objetivo
+Criar memória persistente por projeto.
+
+---
+
+## Estrutura
+
+```text
+/services/memory-layer.ts
+```
+
+---
+
+## Funcionalidades
+
+- salvar memória
+- recuperar memória
+- resumir memória antiga
+- priorizar memória relevante
+
+---
+
+## Critérios de Aceite
+
+- memória persistida
+- recuperação correta
+- contexto reutilizado
+
+---
+
+# US-015 – Criar Knowledge Layer
+
+## Objetivo
+Separar conhecimento explícito da memória operacional.
+
+---
+
+## Estrutura
+
+```text
+/services/knowledge-layer.ts
+```
+
+---
+
+## Funcionalidades
+
+- salvar conhecimento
+- categorizar conhecimento
+- recuperar conhecimento
+- vincular ao projeto
+
+---
+
+## Critérios de Aceite
+
+- conhecimento salvo
+- recuperação funcionando
+- contexto enriquecido
+
+---
+
+# US-016 – Implementar embeddings
+
+## Objetivo
+Permitir busca semântica contextual.
+
+---
+
+## Funcionalidades
+
+- gerar embeddings
+- salvar embeddings
+- busca vetorial
+- similaridade contextual
+
+---
+
+## Critérios de Aceite
+
+- embeddings funcionando
+- busca contextual correta
+
+---
+
+# US-017 – Upload e ingestão de documentos
+
+## Objetivo
+Ensinar conhecimento ao Kairos.
+
+---
+
+## Formatos
+
+```text
+PDF
+DOCX
+TXT
+Markdown
+```
+
+---
+
+## Funcionalidades
+
+- upload
+- extração de texto
+- chunking
+- embeddings
+- indexação
+
+---
+
+## Critérios de Aceite
+
+- documentos processados
+- conhecimento indexado
+
+---
+
+# FASE 7 – KAIROS DENTRO DOS PROJETOS
+
+# US-018 – Integrar Kairos na tela de projeto
+
+## Objetivo
+Permitir conversa contextual dentro do projeto.
+
+---
+
+## Funcionalidades
+
+- Kairos contextualizado
+- conversa dentro do projeto
+- histórico
+- contexto ativo
+
+---
+
+## Critérios de Aceite
+
+- Kairos usa contexto correto
+- não mistura projetos
+
+---
+
+# US-019 – Persistir conversas por projeto
+
+## Objetivo
+Salvar histórico contextual.
+
+---
+
+## Funcionalidades
+
+- salvar transcrição
+- salvar resposta
+- vincular projeto
+- recuperar histórico
+
+---
+
+## Critérios de Aceite
+
+- histórico recuperável
+- contexto persistente
+
+---
+
+# FASE 8 – DECISÕES, TAREFAS E RISCOS
+
+# US-020 – Criar Decision Engine
+
+## Objetivo
+Salvar raciocínio operacional.
+
+---
+
+## Funcionalidades
+
+- registrar decisões
+- registrar impactos
+- registrar motivos
+- recuperar decisões
+
+---
+
+## Critérios de Aceite
+
+- decisões persistidas
+- recuperação funcionando
+
+---
+
+# US-021 – Criar gerenciamento de tarefas
+
+## Objetivo
+Permitir tarefas contextuais.
+
+---
+
+## Funcionalidades
+
+- criar tarefa
+- alterar status
+- definir prioridade
+- vincular projeto
+
+---
+
+## Critérios de Aceite
+
+- tarefas persistidas
+- atualização funcionando
+
+---
+
+# US-022 – Criar gerenciamento de riscos
+
+## Objetivo
+Persistir riscos operacionais.
+
+---
+
+## Funcionalidades
+
+- criar risco
+- classificar impacto
+- classificar probabilidade
+- vincular projeto
+
+---
+
+## Critérios de Aceite
+
+- riscos persistidos
+- consulta funcionando
+
+---
+
+# FASE 9 – AGENTES COMO CAPACIDADES
+
+# US-023 – Reestruturar agentes
+
+## Objetivo
+Transformar agentes em capacidades especializadas.
+
+---
+
+## Tarefas Técnicas
+
+- remover lógica de múltiplos cérebros
+- integrar agentes ao Kairos
+- criar execução contextual
+
+---
+
+## Critérios de Aceite
+
+- agentes funcionando via Kairos
+- contexto compartilhado
+
+---
+
+# US-024 – Integrar capability modules
+
+## Objetivo
+Criar módulos cognitivos internos.
+
+---
+
+## Estrutura
+
+```text
+/prompts/modules
+```
+
+---
+
+## Módulos iniciais
+
+```text
+planning.md
+bpmn.md
+technical.md
+study.md
+translation.md
+executive.md
+```
+
+---
+
+## Critérios de Aceite
+
+- módulos carregados dinamicamente
+- Kairos ativa módulos corretamente
+
+---
+
+# FASE 10 – ARTEFATOS
+
+# US-025 – Reestruturar artefatos
+
+## Objetivo
+Vincular artefatos ao contexto operacional.
+
+---
+
+## Artefatos devem possuir
+
+```text
+cliente
+projeto
+conversa
+tipo
+agente
+status
+data
+```
+
+---
+
+## Critérios de Aceite
+
+- artefatos contextualizados
+- recuperação funcionando
+
+---
+
+# FASE 11 – UX/UI/US
+
+# US-026 – Evoluir UX/UI do frontend
+
+## Objetivo
+Melhorar experiência visual.
+
+---
+
+## Melhorias
+
+- voice-first
+- hierarquia visual
+- clareza contextual
+- mobile
+- experiência conversacional
+
+---
+
+## Critérios de Aceite
+
+- UX moderna
+- navegação clara
+- foco no Kairos
+
+---
+
+# US-027 – Atualizar branding visual do Kairos
+
+## Objetivo
+Adicionar identidade do Kairos ao 7C Commander.
+
+---
+
+## Atualizar
+
+- componentes visuais
+- telas de voz
+- identidade da IA
+- elementos gráficos
+
+---
+
+## Critérios de Aceite
+
+- Kairos visualmente integrado
+- identidade consistente
+
+---
+
+# US-028 – Atualizar tela de ajuda
+
+## Objetivo
+Explicar novo funcionamento do sistema.
+
+---
+
+## Explicar
+
+- quem é Kairos
+- voz
+- projetos
+- memória
+- agentes
+- conhecimento
+- tarefas
+- decisões
+
+---
+
+## Critérios de Aceite
+
+- ajuda atualizada
+- fluxo explicado claramente
+
+---
+
+# FASE 12 – RESULTADO FINAL
+
+# US-029 – Fluxo operacional completo
+
+## Objetivo
+Validar experiência final integrada.
+
+---
+
+## Fluxo esperado
+
+```text
+Usuário conversa por voz
+↓
+Kairos entende intenção
+↓
+Kairos identifica projeto
+↓
+Kairos recupera memória
+↓
+Kairos recupera conhecimento
+↓
+Kairos usa módulos necessários
+↓
+Kairos responde
+↓
+Kairos salva contexto
+↓
+Kairos evolui projeto continuamente
+```
+
+---
+
+## Critérios de Aceite
+
+- fluxo completo funcional
+- voz funcionando
+- contexto persistente
+- projetos isolados
+- memória funcionando
+- agentes integrados
+- experiência fluida
+
+---
+
+# FASE 13 – FUSÃO SEGURA 7C + KAIROS (SEM REGRESSÃO)
+
+# US-030 – Estratégia de fusão incremental sem perda do Kairos atual
+
+## Objetivo
+Integrar capacidades do 7C Commander ao Kairos sem quebrar fluxos já validados.
+
+---
+
+## Tarefas Técnicas
+
+- definir arquitetura alvo de integração incremental
+- manter Kairos Core como núcleo cognitivo central
+- incorporar UX/fluxos do 7C por etapas, com feature flags
+- evitar reescrita total em big-bang
+- criar plano de rollback por etapa
+
+---
+
+## Critérios de Aceite
+
+- Kairos atual continua operacional durante toda a fusão
+- cada etapa pode ser ativada/desativada sem impacto sistêmico
+- regressões críticas inexistentes nos fluxos de voz, chat e projetos
+
+---
+
+# US-031 – Manter login Google como referência de acesso
+
+## Objetivo
+Preservar autenticação Google como base de identidade e sessão do sistema.
+
+---
+
+## Tarefas Técnicas
+
+- integrar login Google ao fluxo principal da aplicação
+- persistir usuário autenticado no Supabase
+- mapear identidade Google para perfil interno
+- manter sessão segura server-side
+
+---
+
+## Critérios de Aceite
+
+- usuário acessa via Google
+- sessão válida e persistida
+- usuário identificado de forma única no Supabase
+
+---
+
+# US-032 – Controle de acesso por projeto e compartilhamento
+
+## Objetivo
+Permitir que cada projeto tenha membros e permissões específicas.
+
+---
+
+## Tarefas Técnicas
+
+- criar governança de membros por projeto
+- permitir convidar usuários por login/email
+- definir papéis: owner, editor, viewer
+- restringir leitura e escrita por permissão
+
+---
+
+## Tabelas obrigatórias adicionais
+
+```text
+profiles
+project_members
+project_invites
+project_permissions
+```
+
+---
+
+## Critérios de Aceite
+
+- owner compartilha projeto com usuários específicos
+- usuários só visualizam projetos autorizados
+- permissões de edição respeitadas
+
+---
+
+# FASE 14 – GESTÃO DE ATIVIDADES (KANBAN ESTILO TRELLO)
+
+# US-033 – Criar módulo de atividades por projeto
+
+## Objetivo
+Adicionar menu e tela de gestão de atividades por projeto.
+
+---
+
+## Tarefas Técnicas
+
+- criar menu lateral `Atividades`
+- criar tela Kanban por projeto
+- vincular atividades ao projeto ativo
+- manter visão isolada por projeto
+
+---
+
+## Critérios de Aceite
+
+- menu de atividades disponível
+- quadro por projeto funcionando
+- atividades persistidas e recuperáveis
+
+---
+
+# US-034 – Implementar Kanban TO DO / DOING / DONE
+
+## Objetivo
+Entregar fluxo operacional base de execução estilo Trello.
+
+---
+
+## Tarefas Técnicas
+
+- criar colunas padrão: TO DO, DOING, DONE
+- criar card de atividade com drag-and-drop entre colunas
+- permitir ordenação manual de cards
+- atualizar status e posição em tempo real
+
+---
+
+## Critérios de Aceite
+
+- usuário cria, move e conclui cards
+- estado do quadro permanece após reload
+- quadro responsivo em desktop e mobile
+
+---
+
+# US-035 – Entregar recursos de card em nível Trello
+
+## Objetivo
+Dar condições reais de trabalho no dia a dia de gestão de atividades.
+
+---
+
+## Funcionalidades obrigatórias do card
+
+- título
+- descrição detalhada
+- etiquetas
+- membros responsáveis
+- data de entrega
+- checklist
+- anexos
+- comentários
+- histórico de atividade
+
+---
+
+## Tabelas obrigatórias adicionais
+
+```text
+task_boards
+task_columns
+tasks
+task_members
+task_labels
+task_checklists
+task_checklist_items
+task_comments
+task_attachments
+task_activity_log
+```
+
+---
+
+## Critérios de Aceite
+
+- cards suportam edição completa
+- histórico registra alterações relevantes
+- anexos e checklists funcionam corretamente
+
+---
+
+# US-036 – Integrar Kairos ao módulo de atividades
+
+## Objetivo
+Permitir criação e atualização de atividades por comando ao Kairos.
+
+---
+
+## Tarefas Técnicas
+
+- detectar intenção de tarefa no Kairos Core
+- criar tarefa automaticamente no quadro do projeto ativo
+- permitir atualização por comando (mover coluna, definir prazo, atribuir membro)
+- registrar ação no histórico da tarefa
+
+---
+
+## Exemplos esperados
+
+```text
+"Kairos, cria tarefa 'Definir escopo do catálogo' em TO DO."
+"Kairos, mover tarefa 'Definir escopo do catálogo' para DOING."
+"Kairos, adicionar checklist na tarefa de escopo."
+```
+
+---
+
+## Critérios de Aceite
+
+- comando do Kairos gera ação real no quadro
+- tarefa criada/atualizada aparece imediatamente na UI
+- ações ficam auditáveis
+
+---
+
+# US-037 – Integrar atividades ao contexto cognitivo do projeto
+
+## Objetivo
+Fazer o Kairos usar tarefas como parte do contexto operacional contínuo.
+
+---
+
+## Tarefas Técnicas
+
+- incluir tarefas abertas no contexto de resposta do Kairos
+- usar tarefas em Daily, riscos e decisões
+- sugerir próximas ações com base no quadro
+
+---
+
+## Critérios de Aceite
+
+- respostas do Kairos consideram quadro real
+- Daily refletindo TO DO/DOING/DONE e bloqueios
+- sugestões contextualizadas por projeto
+
+---
+
+# US-038 – Segurança e auditoria das atividades compartilhadas
+
+## Objetivo
+Garantir governança completa das atividades em projetos compartilhados.
+
+---
+
+## Tarefas Técnicas
+
+- aplicar permissões por card e por projeto
+- registrar trilha de auditoria das ações
+- restringir edição conforme papel do usuário
+
+---
+
+## Critérios de Aceite
+
+- viewer não edita tarefas
+- editor atualiza tarefas conforme permissão
+- owner gerencia membros e acessos
+
+---
+
+# US-039 – Validação E2E do fluxo completo (login -> projeto -> Kairos -> Kanban)
+
+## Objetivo
+Garantir estabilidade da experiência operacional integrada.
+
+---
+
+## Fluxo obrigatório
+
+```text
+Login Google
+↓
+Selecionar projeto
+↓
+Conversar com Kairos
+↓
+Kairos cria/atualiza atividade
+↓
+Card aparece no Kanban
+↓
+Equipe compartilha e executa
+```
+
+---
+
+## Critérios de Aceite
+
+- fluxo completo validado sem quebra
+- dados persistidos no Supabase
+- comportamento consistente em ambiente real

@@ -1,0 +1,654 @@
+# KAIROS
+## User Stories – Arquitetura Voice-First
+
+---
+
+# OBJETIVO
+
+Este documento define as User Stories necessárias para transformar o Kairos em:
+
+# um sistema cognitivo operacional voice-first
+
+Onde:
+- voz é a interface principal
+- projetos são a entidade central
+- memória é persistente
+- conhecimento é contextual
+- o Kairos atua como inteligência operacional contínua
+
+---
+
+# FASE 1 – FUNDAÇÃO DO PROJETO
+
+# US-001 – Criar estrutura base do projeto
+
+## Objetivo
+Criar infraestrutura inicial do Kairos.
+
+---
+
+## Tarefas Técnicas
+
+### GitHub
+- criar repositório
+- criar branches main/dev
+- configurar README
+- configurar .gitignore
+- configurar .env.example
+
+---
+
+### Next.js
+- criar projeto App Router
+- habilitar TypeScript
+- instalar Tailwind
+- configurar ESLint
+
+---
+
+### Estrutura inicial
+
+```text
+/app
+/components
+/services
+/lib
+/prompts
+/database
+/types
+/hooks
+```
+
+---
+
+## Critérios de Aceite
+- projeto sobe localmente
+- build executa sem erro
+- estrutura criada corretamente
+
+---
+
+# US-002 – Configurar Supabase
+
+## Objetivo
+Criar backend persistente do Kairos.
+
+---
+
+## Tarefas Técnicas
+- configurar Supabase
+- criar clients frontend/backend
+- configurar pgvector
+- configurar variáveis de ambiente
+
+---
+
+## Critérios de Aceite
+- frontend conectado
+- backend conectado
+- pgvector ativo
+- sem exposição de credenciais
+
+---
+
+# FASE 2 – EXPERIÊNCIA VOICE-FIRST
+
+# US-003 – Criar tela principal Voice Room
+
+## Objetivo
+Criar interface principal de conversa por voz.
+
+---
+
+## Tarefas Técnicas
+
+### Criar tela principal
+
+```text
+/voice
+```
+
+---
+
+### Componentes visuais
+- animação central do Kairos
+- status de escuta
+- status de processamento
+- status de resposta
+- projeto ativo
+- botão iniciar conversa
+- botão pausar
+- botão finalizar conversa
+
+---
+
+### Estados visuais
+
+```text
+Ouvindo
+Processando
+Respondendo
+Inativo
+Erro
+```
+
+---
+
+## Critérios de Aceite
+- tela funcional
+- estados atualizam corretamente
+- interface responsiva
+- usuário consegue iniciar sessão de voz
+
+---
+
+# US-004 – Implementar captura de voz do navegador
+
+## Objetivo
+Permitir que o usuário converse por voz.
+
+---
+
+## Tarefas Técnicas
+- capturar áudio do microfone
+- solicitar permissões do navegador
+- detectar início/fim de fala
+- controlar sessões de voz
+
+---
+
+## Critérios de Aceite
+- navegador captura voz
+- permissões tratadas corretamente
+- usuário consegue iniciar/parar gravação
+- falhas tratadas corretamente
+
+---
+
+# US-005 – Implementar Speech-to-Text
+
+## Objetivo
+Transformar voz em texto processável.
+
+---
+
+## Tarefas Técnicas
+- integrar OpenAI STT
+- converter áudio para texto
+- retornar texto transcrito
+- tratar falhas de transcrição
+
+---
+
+## Critérios de Aceite
+- voz convertida corretamente
+- transcrição exibida
+- erros tratados corretamente
+
+---
+
+# US-006 – Implementar OpenAI TTS
+
+## Objetivo
+Permitir resposta por voz.
+
+---
+
+## Variáveis
+
+```env
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_TTS_VOICE=sage
+```
+
+---
+
+## Tarefas Técnicas
+- criar `/api/voice`
+- criar service TTS
+- gerar mp3
+- reproduzir áudio no frontend
+
+---
+
+## Critérios de Aceite
+- Kairos responde com voz
+- áudio reproduz corretamente
+- erros tratados corretamente
+
+---
+
+# FASE 3 – KAIROS CORE
+
+# US-007 – Criar Kairos Core
+
+## Objetivo
+Criar inteligência central do Kairos.
+
+---
+
+## Responsabilidades
+- interpretar intenção
+- identificar projeto
+- recuperar memória
+- recuperar conhecimento
+- carregar módulos cognitivos
+- gerar resposta final
+
+---
+
+## Estrutura
+
+```text
+/services/kairos-core.ts
+```
+
+---
+
+## Critérios de Aceite
+- Core recebe entrada textual
+- Core interpreta intenção
+- Core retorna resposta contextual
+
+---
+
+# US-008 – Implementar Project Resolver
+
+## Objetivo
+Identificar projeto relacionado automaticamente.
+
+---
+
+## Estrutura
+
+```text
+/services/project-resolver.ts
+```
+
+---
+
+## Funcionalidades
+- detectar projeto relacionado
+- calcular confiança
+- sugerir novo projeto
+- recuperar projeto ativo
+
+---
+
+## Critérios de Aceite
+- sistema identifica projeto corretamente
+- sistema sugere criação de projeto quando necessário
+- sistema evita mistura de projetos
+
+---
+
+# US-009 – Criar gerenciamento de projetos
+
+## Objetivo
+Transformar projeto em entidade central do Kairos.
+
+---
+
+## Funcionalidades
+- criar projeto
+- listar projetos
+- alterar projeto ativo
+- visualizar contexto do projeto
+- salvar histórico
+
+---
+
+## Campos mínimos
+
+```text
+nome
+descrição
+tags
+status
+contexto
+objetivo
+stakeholders
+maturidade
+```
+
+---
+
+## Critérios de Aceite
+- projetos persistidos
+- usuário consegue alternar projetos
+- contexto carregado corretamente
+
+---
+
+# FASE 4 – MEMÓRIA E CONHECIMENTO
+
+# US-010 – Criar Memory Layer
+
+## Objetivo
+Criar memória contextual persistente.
+
+---
+
+## Estrutura
+
+```text
+/services/memory-layer.ts
+```
+
+---
+
+## Funcionalidades
+- salvar memórias
+- recuperar memórias relevantes
+- classificar prioridade
+- resumir memórias antigas
+
+---
+
+## Critérios de Aceite
+- memórias persistidas
+- contexto reutilizado
+- recuperação semântica funcionando
+
+---
+
+# US-011 – Criar Knowledge Layer
+
+## Objetivo
+Separar conhecimento explícito da memória operacional.
+
+---
+
+## Estrutura
+
+```text
+/services/knowledge-layer.ts
+```
+
+---
+
+## Funcionalidades
+- salvar conhecimento
+- categorizar conhecimento
+- recuperar conhecimento por embeddings
+- vincular conhecimento a projetos
+
+---
+
+## Critérios de Aceite
+- conhecimento persistido
+- busca contextual funcionando
+- conhecimento vinculado ao projeto
+
+---
+
+# US-012 – Implementar embeddings com pgvector
+
+## Objetivo
+Permitir busca semântica contextual.
+
+---
+
+## Funcionalidades
+- gerar embeddings
+- salvar embeddings
+- buscar similaridade
+- recuperar contexto relevante
+
+---
+
+## Critérios de Aceite
+- embeddings gerados corretamente
+- busca contextual funcional
+- respostas usam contexto relevante
+
+---
+
+# US-013 – Criar ingestão de documentos
+
+## Objetivo
+Permitir ensinar conhecimento ao Kairos.
+
+---
+
+## Formatos suportados inicialmente
+
+```text
+PDF
+DOCX
+TXT
+Markdown
+```
+
+---
+
+## Funcionalidades
+- upload de arquivos
+- extração de texto
+- chunking
+- geração de embeddings
+- vinculação ao projeto
+
+---
+
+## Critérios de Aceite
+- arquivos processados
+- conhecimento indexado
+- busca funcionando
+
+---
+
+# FASE 5 – CAPABILITY MODULES
+
+# US-014 – Criar estrutura de prompts modulares
+
+## Objetivo
+Transformar prompts em módulos cognitivos internos.
+
+---
+
+## Estrutura
+
+```text
+/prompts/core
+/prompts/modules
+```
+
+---
+
+## Módulos iniciais
+
+```text
+planning.md
+bpmn.md
+study.md
+translation.md
+technical.md
+writing.md
+```
+
+---
+
+## Critérios de Aceite
+- módulos carregados dinamicamente
+- Core consegue ativar módulos conforme intenção
+
+---
+
+# US-015 – Integrar Prompt Mestre PM AI Partner
+
+## Objetivo
+Transformar o PM AI Partner no núcleo cognitivo do Kairos.
+
+---
+
+## Funcionalidades
+- carregar prompt mestre
+- combinar contexto
+- combinar módulos
+- gerar resposta final
+
+---
+
+## Critérios de Aceite
+- Kairos responde conforme personalidade definida
+- regras do prompt respeitadas
+- projetos tratados isoladamente
+
+---
+
+# FASE 6 – CONVERSA CONTEXTUAL
+
+# US-016 – Implementar fluxo completo de conversa
+
+## Objetivo
+Criar ciclo completo de conversa voice-first.
+
+---
+
+## Fluxo esperado
+
+```text
+Usuário fala
+↓
+STT
+↓
+Kairos Core
+↓
+Project Resolver
+↓
+Memory Layer
+↓
+Knowledge Layer
+↓
+Capability Modules
+↓
+Resposta
+↓
+TTS
+↓
+Áudio reproduzido
+↓
+Contexto salvo
+```
+
+---
+
+## Critérios de Aceite
+- fluxo completo funcional
+- voz contínua operacional
+- contexto persistido
+- respostas contextualizadas
+
+---
+
+# US-017 – Persistir conversas por projeto
+
+## Objetivo
+Organizar histórico contextual.
+
+---
+
+## Funcionalidades
+- salvar conversas
+- vincular ao projeto
+- salvar transcrição
+- salvar respostas
+- salvar contexto operacional
+
+---
+
+## Critérios de Aceite
+- histórico recuperável
+- conversas organizadas por projeto
+- contexto persistente
+
+---
+
+# FASE 7 – DECISÕES E OPERAÇÃO
+
+# US-018 – Criar Decision Engine
+
+## Objetivo
+Salvar raciocínio operacional.
+
+---
+
+## Funcionalidades
+- salvar decisões
+- salvar motivos
+- salvar riscos
+- salvar impactos
+- recuperar decisões
+
+---
+
+## Critérios de Aceite
+- decisões persistidas
+- decisões recuperáveis
+- contexto vinculado ao projeto
+
+---
+
+# US-019 – Criar gerenciamento de tarefas
+
+## Objetivo
+Permitir criação operacional de tarefas.
+
+---
+
+## Funcionalidades
+- criar tarefa por voz
+- alterar status
+- definir prioridade
+- vincular projeto
+
+---
+
+## Critérios de Aceite
+- tarefas persistidas
+- tarefas vinculadas ao projeto
+- atualização funcional
+
+---
+
+# US-020 – Criar Kairos Daily
+
+## Objetivo
+Criar rotina operacional diária.
+
+---
+
+## Funcionalidades
+- prioridades
+- pendências
+- riscos
+- perguntas inteligentes
+- insights
+
+---
+
+## Critérios de Aceite
+- Daily gerado automaticamente
+- Daily usa contexto real
+- Daily contextualizado por projeto
+
+---
+
+# RESULTADO ESPERADO
+
+Ao final destas User Stories, o Kairos deverá:
+
+- funcionar prioritariamente por voz
+- conversar continuamente com o usuário
+- identificar projetos automaticamente
+- criar projetos novos quando necessário
+- recuperar memória contextual
+- recuperar conhecimento estruturado
+- responder contextualizado
+- registrar decisões
+- registrar tarefas
+- organizar histórico operacional
+- atuar como inteligência operacional contínua
+- possuir arquitetura modular cognitiva
+- funcionar como sistema cognitivo voice-first

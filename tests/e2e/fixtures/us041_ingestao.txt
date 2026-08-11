@@ -1,0 +1,5 @@
+Projeto piloto para validacao do fluxo V2.
+
+Objetivo: consolidar operacao com Supabase como fonte oficial.
+Contexto: equipe distribuida, execucao com Kanban e suporte do Kairos.
+Risco principal: atraso na homologacao caso os indicadores nao reflitam o quadro real.

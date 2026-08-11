@@ -1,0 +1,680 @@
+# 7C Commander — Frontend Redesign Spec v1.0
+
+> **Documento interno** · Versão 1.0 · Jun 2026 · Status: Para dev
+
+---
+
+## Sumário
+
+1. [Design system — tokens globais](#1-design-system--tokens-globais)
+2. [Sidebar — navegação global](#2-sidebar--navegação-global)
+3. [Dashboard — tela Início](#3-dashboard--tela-início)
+4. [Voice Room — redesign completo](#4-voice-room--redesign-completo)
+5. [Backlog de melhorias priorizado](#5-backlog-de-melhorias--priorizado)
+6. [Antes × Depois — propriedades CSS](#6-antes--depois--propriedades-css)
+7. [Checklist de entrega](#7-checklist-de-entrega)
+
+---
+
+## 1. Design system — tokens globais
+
+Todos os componentes devem usar as variáveis abaixo. **Nenhuma cor deve ser hardcoded em CSS.**
+
+### 1.1 Paleta de cores
+
+| Token CSS | Hex (light) | Uso | Exemplo aplicado |
+|---|---|---|---|
+| `--color-brand-primary` | `#D85A30` | CTAs, ícones ativos, orbe | Botão Iniciar, badge ativo |
+| `--color-brand-light` | `#FAECE7` | Fundos de destaque suave | Nav item ativo, CTA card |
+| `--color-brand-border` | `#F0997B` | Bordas de destaque | Borda do card Voice Room |
+| `--color-teal-400` | `#1D9E75` | Estado de sucesso / ativo | Badge Ativo, orbe processando |
+| `--color-teal-light` | `#E1F5EE` | Fundo de estado ativo | Pill Ativo, badge de contexto |
+| `--color-gray-50` | `#F1EFE8` | Superfície sidebar / cards | Sidebar, metric cards |
+| `--color-text-primary` | `#2C2C2A` | Títulos e texto principal | Cabeçalhos, valores de métrica |
+| `--color-text-secondary` | `#5F5E5A` | Texto de suporte | Labels, subtítulos, datas |
+| `--color-text-tertiary` | `#888780` | Hints e placeholders | Timestamps, meta info |
+| `--color-border-tertiary` | `rgba(0,0,0,0.12)` | Bordas padrão | Separadores, cards |
+| `--color-border-secondary` | `rgba(0,0,0,0.25)` | Bordas com ênfase | Hover states |
+| `--color-background-primary` | `#FFFFFF` | Superfície principal | Cards, topbar, bubbles AI |
+| `--color-background-secondary` | `#F5F4F0` | Superfície secundária | Inputs, botões secundários |
+| `--color-background-tertiary` | `#EFEDE8` | Background de página | Área de chat, main bg |
+
+### 1.2 Tipografia
+
+| Elemento | Tamanho | Peso | Uso |
+|---|---|---|---|
+| Page title | `20px` | `500` | Títulos de página no topbar |
+| Section heading | `16px` | `500` | Cabeçalhos de cards e seções |
+| Body | `13px` | `400` | Conteúdo principal, descrições |
+| Label / meta | `12px` | `400` | Labels de campos, datas, status |
+| Badge / tag | `11px` | `500` | Pills de status, badges de prioridade |
+| Micro | `10px` | `500` | Section headers na sidebar (uppercase) |
+
+> Dois pesos apenas: `400` regular e `500` medium. Nunca usar `600` ou `700`.
+
+### 1.3 Bordas e raios
+
+- Bordas: sempre `0.5px solid` — nunca `1px` em superfícies de conteúdo
+- `--border-radius-md`: `8px` — botões, inputs, nav items
+- `--border-radius-lg`: `12px` — cards
+- `--border-radius-xl`: `16px` — modais, painéis grandes
+- Pills / badges: `border-radius: 20px`
+- Sidebar items ativos: `border-radius: 8px`, `background: var(--color-brand-light)`
+
+### 1.4 Ícones
+
+Usar exclusivamente **Tabler Icons (outline)**. Nunca variantes `-filled`.
+
+```html
+<i class="ti ti-microphone" aria-hidden="true"></i>
+```
+
+Tamanhos: `16px` inline · `20px` decorativo · `22-24px` destaque (ex: orbe)
+
+---
+
+## 2. Sidebar — navegação global
+
+Compartilhada entre todas as telas. Largura fixa `220px`. Background: `var(--color-gray-50)`.
+
+### 2.1 Estrutura de layout
+
+```css
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 2px;
+  background: var(--color-gray-50);
+  border-right: 0.5px solid var(--color-border-tertiary);
+}
+```
+
+3 zonas: **Brand** (topo) · **Navegação** (meio) · **Footer** (rodapé com `margin-top: auto`)
+
+### 2.2 Brand block
+
+```css
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 18px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  margin-bottom: 8px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #D85A30;
+  color: white;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+```
+
+- Texto do produto: `12px / 500 / --color-text-primary`
+- Email do usuário: `11px / 400 / --color-text-secondary`
+
+### 2.3 Nav items
+
+```css
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-item:hover {
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+}
+
+.nav-item.active {
+  background: #FAECE7;
+  color: #993C1D;
+  font-weight: 500;
+}
+```
+
+Section headers entre grupos:
+
+```css
+.nav-section {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  padding: 12px 10px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+```
+
+### 2.4 Ordem dos itens
+
+**Principal:** Início · Voice Room · Dashboard · Daily
+
+**Dados:** Clientes · Projetos · Artefatos · Agentes
+
+**Footer:** Tema escuro · Configurações
+
+---
+
+## 3. Dashboard — tela Início
+
+Redesign completo do layout. Topbar + corpo scrollável com `background: var(--color-background-tertiary)`.
+
+### 3.1 Topbar
+
+```css
+.topbar {
+  background: var(--color-background-primary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+```
+
+- **Esquerda:** label de workspace (`10px`, laranja, uppercase) + título da página (`16px / 500`)
+- **Direita:** badge de workspace (pill com ícone) + avatar do usuário (`28×28`, `border-radius: 50%`)
+
+### 3.2 Bloco de boas-vindas
+
+```html
+<div class="welcome">
+  <h1>Bom dia, Christian</h1>
+  <p>Você tem 2 projetos ativos e nenhum em risco agora.</p>
+  <div class="quick-actions">
+    <button class="btn-primary">+ Criar cliente</button>
+    <button class="btn-secondary">Criar projeto</button>
+    <button class="btn-secondary">Artefatos</button>
+  </div>
+</div>
+```
+
+- Saudação: `font-size: 20px / font-weight: 500`
+- Subtítulo: `13px / --color-text-secondary` — gerado dinamicamente com contagem de projetos
+- `margin-bottom: 20px` antes do próximo bloco
+
+### 3.3 Card CTA do Voice Room ⭐ NOVO
+
+> Este card **não existe hoje**. Deve ser inserido entre o bloco de boas-vindas e as métricas.
+
+```css
+.voice-cta {
+  background: #FAECE7;
+  border: 0.5px solid #F0997B;
+  border-radius: var(--border-radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+```
+
+Conteúdo:
+
+```html
+<div class="voice-cta">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <i class="ti ti-microphone" style="font-size:22px; color:#993C1D;"></i>
+    <div>
+      <p style="font-size:13px; font-weight:500; color:#993C1D;">Voice Room disponível</p>
+      <p style="font-size:12px; color:#712B13;">Converse com a IA sobre o projeto ativo em tempo real</p>
+    </div>
+  </div>
+  <button class="btn-primary" style="font-size:12px;">▶ Abrir</button>
+</div>
+```
+
+### 3.4 Grid de métricas
+
+```css
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 14px 16px;
+}
+```
+
+- Label: `11px uppercase letter-spacing 0.05em --color-text-secondary`
+- Ícone de categoria: Tabler `16px`, float right, `--color-text-tertiary`
+- Valor: `28px / 500 / --color-text-primary`
+- Sub: `11px / --color-text-tertiary`
+- Card "Em risco" com `count > 0`: valor em `#A32D2D`
+
+Métricas exibidas: **Projetos · Ativos · Em risco · Artefatos**
+
+### 3.5 Grid de painéis
+
+```css
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+```
+
+**Card "Sem atualização recente":**
+- Lista de projetos com nome, data e pill de status
+- Pill Ativo: `background: #E1F5EE; color: #0F6E56`
+- Pill 7+ dias: `background: #FAEEDA; color: #854F0B`
+- Cada linha: `border-bottom: 0.5px solid var(--color-border-tertiary)` — última sem borda
+
+**Card "Projetos em risco":**
+- Empty state com ícone `ti-circle-check` quando vazio
+- Texto: `"Nenhum projeto em risco"` em `--color-text-tertiary`
+
+Card header padrão:
+
+```css
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-link {
+  font-size: 12px;
+  color: #D85A30;
+  cursor: pointer;
+}
+```
+
+---
+
+## 4. Voice Room — redesign completo
+
+> **Mudança de paradigma:** a tela deixa de ser uma "gravação com campos" e passa a ser um **ambiente conversacional de 3 colunas**, similar a um chat com IA.
+
+### 4.1 Layout — 3 colunas
+
+| Coluna | Largura | Conteúdo |
+|---|---|---|
+| Sidebar (esquerda) | `220px` fixo | Navegação global (reutilizada) |
+| Chat principal (centro) | `flex: 1` | Histórico de mensagens + input + orbe |
+| Painel de contexto (direita) | `220px` fixo | Contexto ativo + memória + ações rápidas |
+
+```css
+.vr-wrap {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.vr-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vr-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+```
+
+### 4.2 Topbar do Voice Room
+
+- Label: `7C COMMANDER` — `10px`, laranja, uppercase
+- Título: `Voice Room` — `15px / 500`
+- **Direita:** pill de seleção de projeto ativo (dropdown) + pill status "Centro online"
+
+```css
+.pill-online {
+  font-size: 12px;
+  background: #E1F5EE;
+  border: 0.5px solid #5DCAA5;
+  border-radius: 20px;
+  padding: 5px 12px;
+  color: #0F6E56;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1D9E75;
+  /* animação de blink opcional */
+}
+```
+
+### 4.3 Área de mensagens (chat)
+
+```css
+.vr-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--color-background-tertiary);
+}
+```
+
+**Separador de data:**
+
+```html
+<div style="text-align:center;">
+  <span style="background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:20px; padding:5px 14px; font-size:11px; color:var(--color-text-tertiary);">
+    <i class="ti ti-calendar"></i> Hoje, 09 jun 2026
+  </span>
+</div>
+```
+
+**Bolha da IA:**
+
+```css
+.msg-bubble.ai {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 4px 16px 16px 16px; /* canto superior esquerdo reto */
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+/* Avatar: 30x30, border-radius 50%, background #FAECE7, texto "7C" em #993C1D */
+/* Alinhamento: flex-start */
+```
+
+**Bolha do usuário:**
+
+```css
+.msg-bubble.user {
+  background: #D85A30;
+  color: white;
+  border-radius: 16px 4px 16px 16px; /* canto superior direito reto */
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* Avatar: 30x30, border-radius 50%, background #D85A30, iniciais em branco */
+/* Alinhamento: flex-end (flex-direction: row-reverse) */
+```
+
+> **Regra de ouro:** a transcrição do microfone **é** a bolha do usuário. A resposta da IA **é** a bolha da IA. Os dois painéis estáticos "TRANSCRIÇÃO" e "RESPOSTA OPERACIONAL" são eliminados.
+
+Timestamp: `10px / --color-text-tertiary` abaixo de cada bolha.
+
+### 4.4 Zona do orbe + input (footer fixo)
+
+```css
+.vr-orb-zone {
+  flex-shrink: 0;
+  background: var(--color-background-primary);
+  border-top: 0.5px solid var(--color-border-tertiary);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+```
+
+#### Orbe de voz
+
+```css
+.orb {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+```
+
+**4 estados obrigatórios:**
+
+| Estado | Background | Borda | Ícone | Animação |
+|---|---|---|---|---|
+| `idle` | `#FAECE7` | `2px solid #F0997B` | `ti-microphone` | Nenhuma |
+| `listening` | `#FAECE7` | `2px solid #D85A30` | `ti-microphone` | pulse + ring externo |
+| `processing` | `#E1F5EE` | `2px solid #1D9E75` | `ti-loader` | rotação opcional |
+| `paused` | `#F1EFE8` | `2px solid #B4B2A9` | `ti-microphone-off` | Nenhuma |
+
+**CSS das animações:**
+
+```css
+@keyframes orbPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.1); }
+}
+
+@keyframes ringFade {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.orb.listening {
+  animation: orbPulse 1.2s ease-in-out infinite;
+}
+
+/* Ring externo: div absolute inset:-8px, border-radius 50%, border 1.5px solid #F0997B */
+.orb-ring.listening {
+  animation: ringFade 1.2s ease-in-out infinite;
+}
+```
+
+**Label e sublabel dinâmicos** (exibidos ao lado do orbe):
+
+```js
+const stateLabels = {
+  idle:        { label: 'Pronto para iniciar', sub: 'Clique no orbe para começar' },
+  listening:   { label: 'Escutando...',         sub: 'Fale agora — modo contínuo ativo' },
+  processing:  { label: 'Processando...',       sub: 'Aguarde a resposta da IA' },
+  paused:      { label: 'Pausado',              sub: 'Clique no orbe para retomar' },
+};
+```
+
+#### Controles
+
+- **Botão Pausar/Retomar:** label muda dinamicamente. Disabled com `opacity: 0.4; cursor: not-allowed` quando `state === 'idle'`
+- **Botão Encerrar:** estilo danger
+
+```css
+.btn-danger {
+  background: #FCEBEB;
+  border: 0.5px solid #F09595;
+  color: #A32D2D;
+  border-radius: var(--border-radius-md);
+  padding: 7px 12px;
+  font-size: 12px;
+}
+```
+
+- **Toggle modo contínuo:** obrigatório vincular via `htmlFor`/`id`
+
+```html
+<input type="checkbox" id="modo-continuo" checked />
+<label for="modo-continuo">Modo contínuo (escuta novamente após responder)</label>
+```
+
+#### Campo de texto
+
+```css
+.input-area input {
+  width: 100%;
+  padding: 10px 42px 10px 14px;
+  border-radius: 24px;  /* pill */
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-secondary);
+  font-size: 13px;
+}
+
+.send-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #D85A30;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  color: white;
+  cursor: pointer;
+}
+```
+
+- `Enter` envia a mensagem
+- Mensagem digitada aparece como bolha do usuário no histórico
+- Placeholder: `"Ou digite sua mensagem..."`
+
+### 4.5 Painel lateral direito — contexto
+
+```css
+.vr-panel {
+  width: 220px;
+  min-width: 220px;
+  border-left: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+```
+
+**Seção "Contexto ativo":**
+
+```html
+<div style="background:#E1F5EE; border:0.5px solid #9FE1CB; border-radius:8px; padding:8px 10px;">
+  <p style="font-size:12px; font-weight:500; color:#0F6E56;">
+    <i class="ti ti-briefcase"></i> Desata Assessoria
+  </p>
+  <p style="font-size:11px; color:#085041;">2 projetos · 6 artefatos</p>
+</div>
+```
+
+**Seção "Memória da sessão":**
+- Lista de ações realizadas na sessão atual (atividades criadas, consultas feitas)
+- Cada item: ícone `ti-check` ou `ti-eye` (`14px`, `--color-text-tertiary`) + texto `12px`
+- **Atualiza em tempo real** à medida que a IA executa ações
+
+**Seção "Ações rápidas":**
+- 3 botões verticais: `ti-plus Nova atividade` · `ti-file Criar artefato` · `ti-calendar Agendar daily`
+- Estilo: `border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); font-size: 12px`
+
+---
+
+## 5. Backlog de melhorias — priorizado
+
+| Prioridade | Área | Item | Descrição |
+|---|---|---|---|
+| 🔴 Alta | Voice Room | Estados do orbe | Implementar os 4 estados visuais com animações CSS. Maior problema atual. |
+| 🔴 Alta | Voice Room | Interface conversacional | Substituir layout de "gravação com caixas" pelo ambiente de chat de 3 colunas. |
+| 🔴 Alta | Dashboard | CTA Voice Room | Inserir card de destaque do Voice Room entre boas-vindas e métricas. |
+| 🔴 Alta | Dashboard | Saudação personalizada | Substituir título estático por "Bom dia/tarde/noite, [nome]" com contexto dinâmico. |
+| 🟡 Média | Voice Room | Botão Pausar disabled | Quando conversa inativa, Pausar deve ter `opacity: 0.4; cursor: not-allowed`. |
+| 🟡 Média | Voice Room | Hierarquia dos botões | "Encerrar" com estilo danger — ação destrutiva não deve ser a mais saliente. |
+| 🟡 Média | Dashboard | Pill de status 7+ dias | Projetos sem update: pill amber `#FAEEDA / #854F0B` diferente do Ativo. |
+| 🟡 Média | Global | Acessibilidade aria-live | Áreas de chat precisam de `aria-live="polite"` (IA) e `aria-live="assertive"` (usuário). |
+| 🟡 Média | Global | Checkbox htmlFor | Toggle "Modo contínuo" deve vincular `<label>` via `for`/`id`. |
+| 🟡 Média | Voice Room | Scroll dos painéis | `min-height: 80px; max-height: 200px; overflow-y: auto` nos painéis legados se mantidos. |
+| 🟢 Baixa | Voice Room | Placeholder visível | Textos "Aguardando..." em `--color-text-tertiary` + `font-style: italic`. |
+| 🟢 Baixa | Global | Mobile responsive | Botões do Voice Room com `flex-wrap` ou layout vertical abaixo de `480px`. |
+| 🟢 Baixa | Sidebar | Section labels | Adicionar labels "Principal" e "Dados" acima dos grupos de nav items. |
+
+---
+
+## 6. Antes × Depois — propriedades CSS
+
+| Componente | Antes (atual) | Depois (redesign) |
+|---|---|---|
+| Voice Room — layout geral | 1 coluna central com círculo isolado | 3 colunas: sidebar + chat + painel de contexto |
+| Orbe — estados visuais | 1 estado estático ("Inativo") | 4 estados com animações CSS distintas |
+| Transcrição do usuário | Caixa estática separada na base | Bolha de chat alinhada à direita |
+| Resposta da IA | Caixa estática separada na base | Bolha de chat alinhada à esquerda |
+| Botão "Finalizar conversa" | Destaque visual igual ao botão primário | Estilo danger: `border danger, bg danger-light` |
+| Dashboard — saudação | Título estático "Command center operacional" | "Bom dia, [nome]" com subtítulo dinâmico |
+| Dashboard — métricas | Cards sem ícone de categoria | Label + ícone Tabler + valor `28px` |
+| Sidebar — nav items | Sem section labels entre grupos | Labels "Principal" e "Dados" em `uppercase 10px` |
+| Pill status "Ativo" | Pill outline simples sem cor semântica | `background: #E1F5EE; color: #0F6E56` |
+| Input de texto VR | Ausente | Input pill com botão de envio circular laranja |
+| Painel de contexto VR | Label "Contexto carregado: X" texto plano | Card verde com nome, contagem, memória da sessão |
+
+---
+
+## 7. Checklist de entrega
+
+### Dashboard
+
+- [ ] Saudação personalizada com nome do usuário e período do dia
+- [ ] Subtítulo dinâmico com contagem de projetos ativos e em risco
+- [ ] CTA card do Voice Room inserido e funcional (link para a tela)
+- [ ] Grid de 4 métricas com ícones, valores e sub-labels
+- [ ] Card "Em risco" com cor vermelha quando `count > 0`
+- [ ] Pills de status com cores semânticas (verde ativo, amber 7+ dias)
+- [ ] Empty state do card "Projetos em risco" com ícone `ti-circle-check`
+
+### Voice Room
+
+- [ ] Layout de 3 colunas funcionando (sidebar + chat + painel direito)
+- [ ] Histórico de mensagens com bolhas distintas (IA esquerda, usuário direita)
+- [ ] 4 estados do orbe implementados (`idle`, `listening`, `processing`, `paused`)
+- [ ] Animação `orbPulse` + `ringFade` no estado `listening`
+- [ ] Label e sublabel atualizando dinamicamente com o estado atual
+- [ ] Botão Pausar com label dinâmico (Pausar / Retomar) e estado disabled quando `idle`
+- [ ] Botão Encerrar com estilo danger
+- [ ] Campo de texto com envio por `Enter`
+- [ ] Mensagem digitada aparece como bolha do usuário no histórico
+- [ ] Painel direito: contexto ativo, memória da sessão, ações rápidas
+- [ ] Toggle "Modo contínuo" com `htmlFor`/`id` vinculados corretamente
+- [ ] `aria-live` nos containers de chat
+
+### Global
+
+- [ ] Tokens CSS definidos como variáveis CSS (zero cores hardcoded)
+- [ ] Dark mode: todas as superfícies testadas com fundo escuro
+- [ ] Responsivo: testado em 1280px, 1440px e 1920px de largura
+- [ ] Sidebar com section labels e estados `hover` / `active` corretos
+- [ ] Footer da sidebar com `margin-top: auto`
+
+---
+
+*Fim do documento — 7C Commander Frontend Redesign Spec v1.0*

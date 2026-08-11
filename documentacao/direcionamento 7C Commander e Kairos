@@ -1,0 +1,679 @@
+# 7C COMMANDER + KAIROS
+## Documento Final de Direcionamento Arquitetural e Desenvolvimento
+
+---
+
+# 1. Objetivo do Produto
+
+O 7C Commander continuará sendo a plataforma principal do produto.
+
+O Kairos NÃO substituirá o 7C Commander.
+
+O Kairos passará a ser:
+
+# o parceiro cognitivo operacional integrado ao 7C Commander.
+
+---
+
+# 2. Nova Visão do Produto
+
+## Antes
+
+O 7C Commander funcionava como:
+- plataforma operacional
+- gestão de projetos
+- execução de agentes
+- artefatos
+- dependência de Google Drive e Sheets
+
+---
+
+## Agora
+
+O 7C Commander passa a ser:
+
+# uma plataforma operacional com inteligência contextual integrada.
+
+O Kairos será responsável por:
+- conversa por voz
+- memória contextual
+- entendimento de projetos
+- organização operacional
+- apoio estratégico
+- criação de tarefas
+- registro de decisões
+- recuperação de conhecimento
+- suporte contínuo aos projetos
+
+---
+
+# 3. Conceito Central
+
+## 7C Commander
+
+Responsável por:
+- frontend operacional
+- projetos
+- clientes
+- artefatos
+- dashboards
+- navegação
+- experiência visual
+
+---
+
+## Kairos
+
+Responsável por:
+- inteligência operacional
+- conversa contextual
+- memória
+- conhecimento
+- decisões
+- entendimento do projeto
+- apoio estratégico
+- execução cognitiva
+
+---
+
+# 4. Princípio Principal do Sistema
+
+O usuário não utilizará:
+- múltiplos bots separados
+- múltiplos GPTs
+- múltiplos cérebros independentes
+
+O usuário utilizará:
+
+# UMA inteligência operacional contínua chamada Kairos.
+
+---
+
+# 5. Papel dos Agentes
+
+Os agentes NÃO serão removidos.
+
+Os agentes continuarão existindo como:
+# capacidades especializadas.
+
+---
+
+## Exemplo
+
+Usuário fala:
+
+```text
+Kairos, analise este documento e monte um backlog.
+```
+
+O Kairos poderá:
+- identificar intenção
+- ativar capacidade/agente adequada
+- processar documento
+- gerar backlog
+- salvar artefato
+- registrar decisões
+
+---
+
+# 6. Home do Sistema
+
+A Home do 7C Commander deverá ser totalmente redesenhada.
+
+---
+
+# 7. Estrutura da Nova Home
+
+## Manter
+
+- menu lateral atual
+- estrutura de workspace
+- login atual
+- autenticação atual
+
+---
+
+## Alterar conteúdo principal
+
+A Home deve ser simplificada.
+
+---
+
+# 8. Elementos obrigatórios da Home
+
+## 1. Kairos no centro da tela
+
+O Kairos deverá aparecer como:
+# inteligência principal do sistema.
+
+---
+
+## Interface central
+
+A interface deverá conter:
+
+- animação/avatar do Kairos
+- status visual
+- captura de voz
+- feedback de áudio
+- botão iniciar conversa
+- botão pausar
+- botão finalizar
+- indicador de projeto ativo
+
+---
+
+## Estados do Kairos
+
+```text
+Inativo
+Ouvindo
+Pensando
+Respondendo
+Erro
+```
+
+---
+
+# 9. Indicadores da Home
+
+A Home deverá exibir apenas:
+
+```text
+TO DO
+DOING
+DONE
+```
+
+Representando:
+- projetos iniciados
+- projetos em andamento
+- projetos concluídos
+
+---
+
+# 10. Remover excesso visual da Home
+
+Remover da tela inicial:
+
+- projetos em risco
+- artefatos recentes
+- sem atualização recente
+- múltiplos painéis
+- listas operacionais extensas
+
+Essas informações devem existir em telas específicas.
+
+---
+
+# 11. Menus laterais
+
+Os menus laterais atuais devem permanecer:
+
+```text
+Início
+Clientes
+Projetos
+Artefatos
+Agentes
+Ajuda
+Configurações
+```
+
+---
+
+# 12. Voz como experiência principal
+
+O sistema deverá ser:
+# voice-first.
+
+---
+
+# 13. Fluxo principal esperado
+
+```text
+Usuário fala
+↓
+Speech-to-Text
+↓
+Kairos Core
+↓
+Project Resolver
+↓
+Memory Layer
+↓
+Knowledge Layer
+↓
+Capability Modules
+↓
+Resposta
+↓
+Text-to-Speech
+↓
+Kairos responde por voz
+↓
+Sistema salva contexto
+```
+
+---
+
+# 14. Chat textual
+
+O chat textual continuará existindo apenas como:
+- apoio
+- histórico
+- auditoria
+- visualização
+- fallback
+
+A experiência principal deverá ser:
+# conversa por voz.
+
+---
+
+# 15. Kairos dentro dos projetos
+
+Ao acessar um projeto:
+
+```text
+Kairos deve automaticamente assumir o contexto daquele projeto.
+```
+
+---
+
+# 16. Regras obrigatórias do contexto
+
+Dentro do projeto:
+- usar memória daquele projeto
+- usar conhecimento daquele projeto
+- usar decisões daquele projeto
+- usar tarefas daquele projeto
+- não misturar projetos
+
+---
+
+# 17. Interface dentro do projeto
+
+Cada projeto deverá possuir:
+
+- área de conversa com Kairos
+- histórico de conversas
+- tarefas
+- decisões
+- riscos
+- conhecimentos
+- artefatos
+- contexto operacional
+
+---
+
+# 18. Project Resolver
+
+Criar:
+
+```text
+/services/project-resolver.ts
+```
+
+---
+
+# 19. Responsabilidades do Project Resolver
+
+- identificar projeto relacionado
+- calcular confiança contextual
+- reutilizar contexto existente
+- sugerir novo projeto
+- evitar mistura de contexto
+
+---
+
+# 20. Regra importante
+
+Se o usuário estiver dentro de um projeto:
+
+```text
+usar automaticamente o projeto atual
+```
+
+Se estiver fora:
+
+```text
+Kairos tenta identificar projeto pela conversa
+```
+
+---
+
+# 21. Supabase como base principal
+
+O Supabase passa a ser:
+# a base operacional e cognitiva principal do sistema.
+
+---
+
+# 22. Google Drive
+
+Google Drive deixa de ser:
+# a base principal.
+
+Google Drive poderá continuar apenas como:
+- exportação
+- backup
+- compartilhamento
+- armazenamento opcional
+
+---
+
+# 23. Estrutura principal do Supabase
+
+Criar/adaptar tabelas:
+
+```text
+clients
+projects
+project_statuses
+conversations
+messages
+memories
+memory_embeddings
+knowledge_base
+knowledge_chunks
+knowledge_embeddings
+decisions
+tasks
+risks
+artifacts
+agent_runs
+voice_sessions
+```
+
+---
+
+# 24. Memory Layer
+
+Criar:
+
+```text
+/services/memory-layer.ts
+```
+
+---
+
+# 25. Responsabilidades da memória
+
+- salvar contexto
+- recuperar memórias relevantes
+- resumir memórias antigas
+- priorizar contexto importante
+- manter isolamento por projeto
+
+---
+
+# 26. Knowledge Layer
+
+Criar:
+
+```text
+/services/knowledge-layer.ts
+```
+
+---
+
+# 27. Responsabilidades da base de conhecimento
+
+Separar claramente:
+
+## Memória
+Aprendizado operacional contínuo.
+
+## Conhecimento
+Conteúdo ensinado explicitamente.
+
+---
+
+# 28. Conhecimento suportado
+
+Preparar estrutura para:
+
+```text
+PDF
+DOCX
+TXT
+Markdown
+BPMN
+Documentações
+Backlogs
+Requisitos
+Arquiteturas
+```
+
+---
+
+# 29. Embeddings
+
+Utilizar:
+- pgvector
+- embeddings OpenAI
+- recuperação semântica
+
+---
+
+# 30. Kairos Core
+
+Criar:
+
+```text
+/services/kairos-core.ts
+```
+
+---
+
+# 31. Responsabilidades do Kairos Core
+
+- interpretar intenção
+- carregar Prompt Mestre
+- identificar projeto
+- recuperar memória
+- recuperar conhecimento
+- ativar módulos necessários
+- gerar resposta final
+- salvar contexto relevante
+
+---
+
+# 32. Prompt Mestre
+
+O Prompt Mestre PM AI Partner será:
+# o núcleo cognitivo do Kairos.
+
+---
+
+# 33. Capability Modules
+
+Os prompts especializados NÃO serão agentes separados.
+
+Eles serão:
+# módulos cognitivos internos.
+
+---
+
+# 34. Estrutura dos módulos
+
+```text
+/prompts/modules
+```
+
+---
+
+# 35. Exemplos
+
+```text
+planning.md
+bpmn.md
+technical.md
+study.md
+translation.md
+executive.md
+```
+
+---
+
+# 36. Função dos módulos
+
+Cada módulo:
+- adiciona regras
+- adiciona especialização
+- adiciona frameworks
+- adiciona comportamento contextual
+
+Mas NÃO assume controle total do sistema.
+
+---
+
+# 37. Voz
+
+Inicialmente utilizar:
+
+```text
+OpenAI TTS
+```
+
+---
+
+# 38. Configuração inicial
+
+```env
+OPENAI_API_KEY=
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_TTS_VOICE=sage
+```
+
+---
+
+# 39. Voice Interface
+
+Criar:
+- captura de voz
+- feedback visual
+- estados visuais
+- reprodução de áudio
+- controle de sessão
+
+---
+
+# 40. Frontend
+
+O frontend atual deverá:
+- ser reaproveitado
+- ser evoluído
+- ganhar UX/UI/US mais moderna
+- focar em experiência voice-first
+
+---
+
+# 41. Melhorias obrigatórias de UX/UI
+
+Melhorar:
+- hierarquia visual
+- responsividade
+- clareza contextual
+- foco no projeto ativo
+- visualização de memória
+- visualização de decisões
+- experiência conversacional
+
+---
+
+# 42. Branding
+
+O sistema continuará sendo:
+# 7C Commander.
+
+---
+
+# 43. Kairos
+
+Kairos será apresentado como:
+
+# parceiro profissional inteligente do 7C Commander.
+
+---
+
+# 44. Não alterar
+
+Não alterar:
+- nome principal do sistema
+- conceito da plataforma
+- estrutura operacional geral
+
+---
+
+# 45. Atualizar identidade visual
+
+Atualizar:
+- logos secundárias
+- elementos visuais do Kairos
+- telas de voz
+- identidade da IA
+- comunicação visual da inteligência
+
+---
+
+# 46. Tela de Ajuda
+
+Atualizar completamente a ajuda.
+
+---
+
+# 47. A ajuda deverá explicar
+
+- quem é o Kairos
+- como conversar por voz
+- como criar projetos
+- como usar agentes
+- diferença entre Kairos e agentes
+- como memória funciona
+- como conhecimento funciona
+- como decisões são registradas
+- como tarefas são criadas
+
+---
+
+# 48. Processo correto do sistema
+
+O sistema deverá funcionar assim:
+
+```text
+Usuário conversa naturalmente
+↓
+Kairos entende intenção
+↓
+Kairos identifica projeto
+↓
+Kairos recupera contexto
+↓
+Kairos usa módulos necessários
+↓
+Kairos responde
+↓
+Kairos registra memória
+↓
+Kairos registra decisões/tarefas
+↓
+Kairos evolui contexto do projeto
+```
+
+---
+
+# 49. Resultado esperado
+
+Ao final do desenvolvimento, o 7C Commander deverá se tornar:
+
+# uma plataforma operacional com inteligência contextual integrada,
+
+onde:
+- o usuário conversa com Kairos por voz
+- os projetos possuem memória própria
+- os agentes funcionam como capacidades especializadas
+- o Supabase mantém contexto persistente
+- o sistema aprende continuamente
+- o Kairos atua como parceiro profissional operacional contínuo.

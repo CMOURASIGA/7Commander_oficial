@@ -1,0 +1,504 @@
+# KAIROS
+## Redirecionamento Arquitetural do Projeto
+
+---
+
+# OBJETIVO DESTE DOCUMENTO
+
+Este documento redefine a direção arquitetural do Kairos.
+
+O projeto NÃO deve mais seguir a ideia de:
+- múltiplos agentes independentes
+- múltiplas personalidades separadas
+- agregador de GPTs
+- chat textual com voz opcional
+
+A nova direção é:
+
+# UMA inteligência operacional central
+com:
+- contexto persistente
+- voz como interface principal
+- projetos como entidade central
+- capacidades internas especializadas
+- memória e conhecimento estruturados
+
+---
+
+# NOVA VISÃO DO KAIROS
+
+O Kairos será um:
+
+# Sistema Cognitivo Operacional Voice-First
+
+Inspirado no conceito de:
+- Jarvis
+- copiloto operacional
+- inteligência contextual persistente
+
+---
+
+# EXPERIÊNCIA PRINCIPAL
+
+A interface principal NÃO será um chat textual tradicional.
+
+A experiência principal será:
+
+```text
+Usuário conversa por voz
+↓
+Kairos escuta
+↓
+Kairos identifica contexto
+↓
+Kairos identifica projeto relacionado
+↓
+Kairos recupera memória e conhecimento
+↓
+Kairos responde por voz
+↓
+Kairos registra contexto operacional
+```
+
+---
+
+# PRINCIPAL MUDANÇA CONCEITUAL
+
+## Antes
+
+```text
+Kairos PM
+Kairos BPMN
+Kairos Study
+Kairos Translate
+Kairos Tech
+```
+
+Arquitetura semelhante a:
+- múltiplos GPTs
+- múltiplos cérebros
+- múltiplos agentes separados
+
+---
+
+## Agora
+
+```text
+Kairos Core
+├── PM Framework
+├── BPMN Framework
+├── Study Framework
+├── Translation Framework
+├── Technical Framework
+├── Planning Framework
+├── Writing Framework
+└── Decision Framework
+```
+
+---
+
+# NOVA DEFINIÇÃO
+
+O Kairos terá:
+
+## UMA inteligência central
+
+E os prompts especializados se tornarão:
+
+# módulos cognitivos internos
+
+---
+
+# OBJETIVO DOS MÓDULOS
+
+Cada módulo representa:
+- uma capacidade
+- um framework operacional
+- uma especialização contextual
+
+Mas NÃO:
+- uma personalidade separada
+- um agente independente
+
+---
+
+# PROMPT CENTRAL
+
+O prompt:
+
+```text
+PM AI Partner
+```
+
+passa a ser:
+
+# o núcleo cognitivo principal do Kairos
+
+---
+
+# RESPONSABILIDADE DO CORE
+
+O Kairos Core será responsável por:
+- entender intenção
+- identificar contexto
+- identificar projeto
+- recuperar memória
+- recuperar conhecimento
+- decidir quais módulos utilizar
+- gerar resposta final
+
+---
+
+# FLUXO ARQUITETURAL
+
+```text
+Voice Layer
+↓
+Kairos Core
+↓
+Project Resolver
+↓
+Memory Layer
+↓
+Knowledge Layer
+↓
+Decision Engine
+↓
+Capability Modules
+↓
+Response Generator
+↓
+Voice Output
+```
+
+---
+
+# VOICE-FIRST
+
+A voz passa a ser:
+# interface principal do sistema
+
+O chat textual continuará existindo:
+- como apoio
+- histórico
+- visualização
+- edição
+- auditoria
+
+Mas NÃO como experiência principal.
+
+---
+
+# TELA PRINCIPAL
+
+A experiência principal deverá conter:
+
+```text
+Animação central do Kairos
+Status de escuta
+Status de processamento
+Status de resposta
+Projeto ativo
+Botão iniciar conversa
+Botão pausar
+Botão finalizar
+Botão trocar projeto
+```
+
+---
+
+# COMPORTAMENTO DO KAIROS
+
+O Kairos deverá:
+
+## 1. Identificar intenção
+
+Exemplos:
+- projeto existente
+- novo projeto
+- tarefa
+- decisão
+- estudo
+- BPMN
+- backlog
+- tradução
+- conversa geral
+
+---
+
+## 2. Resolver projeto
+
+O sistema deverá:
+- procurar projetos relacionados
+- calcular confiança contextual
+- reutilizar contexto existente
+- sugerir criação de novo projeto quando necessário
+
+---
+
+# REGRAS IMPORTANTES
+
+## NÃO criar projeto automaticamente em qualquer situação.
+
+Criar projeto automaticamente apenas quando:
+- o usuário pedir explicitamente
+OU
+- houver forte confiança contextual
+
+---
+
+# PROJECT RESOLVER
+
+Criar:
+
+```text
+/services/project-resolver.ts
+```
+
+Responsável por:
+- identificar projeto relacionado
+- calcular confiança
+- decidir reutilização ou criação
+- retornar projeto ativo
+
+---
+
+# EXEMPLO DE FUNCIONAMENTO
+
+## Caso 1
+
+Usuário:
+```text
+Kairos, continua o planejamento do EAC.
+```
+
+Fluxo:
+```text
+detecta projeto EAC
+carrega memória
+carrega decisões
+carrega backlog
+carrega riscos
+responde contextualizado
+salva nova interação
+```
+
+---
+
+## Caso 2
+
+Usuário:
+```text
+Kairos, quero começar uma ideia nova sobre IA para restaurantes.
+```
+
+Fluxo:
+```text
+não encontra projeto relacionado
+detecta possível novo projeto
+pergunta confirmação
+cria projeto
+salva contexto inicial
+```
+
+---
+
+# NOVA RESPONSABILIDADE DO SUPABASE
+
+O Supabase NÃO será apenas banco de chat.
+
+Passa a ser:
+
+# sistema cognitivo operacional persistente
+
+---
+
+# ESTRUTURA DO SUPABASE
+
+## Projetos
+
+```text
+projects
+```
+
+---
+
+## Conversas
+
+```text
+conversations
+messages
+```
+
+---
+
+## Memórias
+
+```text
+memories
+memory_embeddings
+```
+
+---
+
+## Conhecimento
+
+```text
+knowledge_base
+knowledge_chunks
+knowledge_embeddings
+```
+
+---
+
+## Decisões
+
+```text
+decisions
+```
+
+---
+
+## Tarefas
+
+```text
+tasks
+```
+
+---
+
+## Riscos
+
+```text
+risks
+```
+
+---
+
+## BPMN
+
+```text
+process_models
+```
+
+---
+
+# MEMORY LAYER
+
+A memória deverá:
+- ser compartilhada
+- ser contextual por projeto
+- ser persistente
+- alimentar decisões e respostas
+
+---
+
+# KNOWLEDGE LAYER
+
+Separar claramente:
+
+## Memória
+O que o Kairos aprende com uso.
+
+---
+
+## Conhecimento
+O que o usuário ensina explicitamente.
+
+---
+
+# CONHECIMENTO DEVERÁ SUPORTAR
+
+- texto manual
+- PDFs
+- DOCX
+- markdown
+- documentação técnica
+- regras operacionais
+- BPMN
+- processos
+
+---
+
+# EMBEDDINGS
+
+Utilizar:
+- pgvector
+- recuperação semântica
+- busca contextual
+
+---
+
+# CAPABILITY MODULES
+
+Os prompts especializados deverão ser organizados em:
+
+```text
+/prompts/modules
+```
+
+---
+
+# EXEMPLOS
+
+```text
+/prompts/modules/bpmn.md
+/prompts/modules/study.md
+/prompts/modules/planning.md
+/prompts/modules/translation.md
+/prompts/modules/technical.md
+```
+
+---
+
+# RESPONSABILIDADE DOS MÓDULOS
+
+Cada módulo:
+- adiciona contexto
+- adiciona framework operacional
+- adiciona regras especializadas
+
+Mas NÃO assume controle total da resposta.
+
+---
+
+# OPENAI
+
+A OpenAI continuará responsável por:
+- raciocínio
+- interpretação
+- geração de respostas
+- voz
+- classificação contextual
+
+---
+
+# VOZ
+
+Inicialmente:
+- OpenAI TTS
+- voz `sage`
+
+---
+
+# FUTURO
+
+Futuramente poderá existir:
+- ElevenLabs Premium
+- voz exclusiva
+- streaming realtime
+- conversação contínua
+
+---
+
+# OBJETIVO FINAL
+
+Transformar o Kairos em:
+
+# uma inteligência operacional contínua,
+contextual,
+voice-first,
+orientada a projetos,
+com memória persistente,
+base de conhecimento estruturada,
+e capacidade de evoluir junto ao usuário.

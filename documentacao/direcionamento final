@@ -1,0 +1,413 @@
+# KAIROS
+## Orientação Arquitetural Cognitiva para Desenvolvimento
+
+---
+
+# OBJETIVO
+
+Este documento redefine a lógica operacional do Kairos.
+
+O Kairos NÃO deve ser desenvolvido como:
+- um chatbot comum
+- múltiplos GPTs independentes
+- um sistema textual com voz opcional
+- um simples histórico de conversa
+
+O Kairos deve ser desenvolvido como:
+
+# uma inteligência operacional generativa,
+voice-first,
+orientada a projetos,
+que constrói continuamente sua própria base contextual.
+
+---
+
+# CONCEITO CENTRAL
+
+O Kairos inicia como:
+- uma IA generativa baseada em OpenAI
+- utilizando o Prompt Mestre PM AI Partner
+
+Mas ao longo das conversas:
+- constrói memória
+- constrói conhecimento
+- estrutura projetos
+- registra decisões
+- registra tarefas
+- organiza contexto operacional
+
+---
+
+# DEFINIÇÃO IMPORTANTE
+
+## OpenAI NÃO é o Kairos.
+
+A OpenAI é:
+# o motor generativo.
+
+---
+
+# O verdadeiro valor do Kairos será:
+
+```text
+contexto acumulado
++
+projetos
++
+decisões
++
+memórias
++
+conhecimento estruturado
++
+continuidade operacional
+```
+
+---
+
+# DEFINIÇÃO DO SUPABASE
+
+O Supabase NÃO deve ser tratado apenas como banco de dados.
+
+O Supabase deve ser tratado como:
+
+# sistema cognitivo operacional persistente
+
+---
+
+# PAPEL DO SUPABASE
+
+O Supabase armazenará:
+
+## Projetos
+
+```text
+projects
+```
+
+---
+
+## Conversas
+
+```text
+conversations
+messages
+```
+
+---
+
+## Memórias
+
+```text
+memories
+memory_embeddings
+```
+
+---
+
+## Conhecimento
+
+```text
+knowledge_base
+knowledge_chunks
+knowledge_embeddings
+```
+
+---
+
+## Decisões
+
+```text
+decisions
+```
+
+---
+
+## Tarefas
+
+```text
+tasks
+```
+
+---
+
+## Riscos
+
+```text
+risks
+```
+
+---
+
+## BPMN
+
+```text
+process_models
+```
+
+---
+
+# PRINCÍPIO OPERACIONAL
+
+O Kairos deve:
+# transformar conversa em estrutura operacional.
+
+---
+
+# EXEMPLO
+
+Usuário fala:
+
+```text
+Acho que deveríamos separar voz da inteligência.
+```
+
+O sistema NÃO deve apenas responder.
+
+O sistema também deve identificar:
+
+```text
+tipo:
+decisão arquitetural
+
+categoria:
+arquitetura
+
+impacto:
+alto
+
+projeto:
+Kairos
+```
+
+E registrar:
+- decisão
+- contexto
+- impacto
+- histórico
+
+---
+
+# OUTRO EXEMPLO
+
+Usuário fala:
+
+```text
+Precisamos criar backlog para a fase de memória.
+```
+
+O Kairos deverá:
+- responder normalmente
+- identificar intenção operacional
+- sugerir backlog
+- criar tarefas
+- salvar contexto
+- vincular ao projeto
+
+---
+
+# PROCESSO CORRETO DO KAIROS
+
+```text
+Usuário fala
+↓
+Speech-to-Text
+↓
+Kairos Core
+↓
+Project Resolver
+↓
+Memory Layer
+↓
+Knowledge Layer
+↓
+Capability Modules
+↓
+Resposta
+↓
+Text-to-Speech
+↓
+Persistência contextual
+```
+
+---
+
+# IMPORTANTE
+
+O Kairos NÃO deve:
+- depender exclusivamente do modelo generativo
+- responder apenas com contexto momentâneo
+- esquecer decisões antigas
+- misturar projetos
+- tratar todas as conversas igualmente
+
+---
+
+# O KAIROS DEVE:
+
+## 1. Entender intenção
+
+Exemplos:
+- novo projeto
+- continuação de projeto
+- decisão
+- tarefa
+- backlog
+- BPMN
+- estudo
+- tradução
+- conversa geral
+
+---
+
+## 2. Resolver projeto
+
+O sistema deverá:
+- identificar projeto relacionado
+- calcular confiança contextual
+- carregar contexto correto
+- sugerir novo projeto quando necessário
+
+---
+
+## 3. Recuperar memória
+
+Buscar:
+- decisões
+- riscos
+- tarefas
+- backlog
+- conversas
+- documentos
+- conhecimento relacionado
+
+---
+
+## 4. Recuperar conhecimento
+
+Buscar:
+- documentação
+- PDFs
+- BPMN
+- regras
+- arquitetura
+- processos
+- textos estruturados
+
+---
+
+## 5. Gerar resposta contextual
+
+A resposta deve considerar:
+- projeto ativo
+- histórico
+- decisões anteriores
+- contexto operacional
+- módulos cognitivos necessários
+
+---
+
+## 6. Persistir contexto novo
+
+Toda interação relevante deve poder gerar:
+- memória
+- decisão
+- tarefa
+- backlog
+- risco
+- conhecimento
+- relacionamento contextual
+
+---
+
+# DEFINIÇÃO DOS PROMPTS
+
+Os prompts NÃO devem ser tratados como:
+- agentes independentes
+- múltiplas personalidades
+
+---
+
+# NOVA DEFINIÇÃO
+
+Os prompts passam a ser:
+
+# módulos cognitivos internos
+
+---
+
+# EXEMPLO
+
+```text
+/prompts/modules/planning.md
+/prompts/modules/bpmn.md
+/prompts/modules/study.md
+/prompts/modules/technical.md
+```
+
+---
+
+# RESPONSABILIDADE DOS MÓDULOS
+
+Cada módulo:
+- adiciona regras
+- adiciona especialização
+- adiciona frameworks
+- adiciona comportamento contextual
+
+Mas NÃO controla o sistema sozinho.
+
+---
+
+# PROMPT MESTRE
+
+O Prompt Mestre PM AI Partner será:
+# o núcleo cognitivo principal do Kairos.
+
+---
+
+# O KAIROS CORE DEVERÁ:
+
+- carregar o Prompt Mestre
+- carregar memória do projeto
+- carregar conhecimento relacionado
+- carregar módulos necessários
+- gerar resposta final
+
+---
+
+# VOICE-FIRST
+
+A interface principal do Kairos será:
+# voz.
+
+O chat textual existirá apenas como:
+- apoio
+- histórico
+- auditoria
+- visualização
+
+---
+
+# EXPERIÊNCIA ESPERADA
+
+O usuário deve sentir que:
+# está conversando continuamente com uma inteligência contextual.
+
+Não com:
+- vários bots
+- múltiplos agentes
+- prompts isolados
+
+---
+
+# OBJETIVO FINAL
+
+Construir:
+# uma inteligência operacional contínua,
+orientada a projetos,
+capaz de aprender,
+estruturar,
+organizar,
+contextualizar
+e evoluir junto ao usuário.
