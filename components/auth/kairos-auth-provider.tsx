@@ -9,6 +9,8 @@ type KairosAuthState = {
   loading: boolean;
   required: boolean;
   user: User | null;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (nextPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -28,7 +30,7 @@ async function syncProfile(user: User) {
       body: JSON.stringify({
         nome: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "",
         avatarUrl: user.user_metadata?.avatar_url ?? "",
-        provider: "google",
+        provider: user.app_metadata?.provider ?? "email",
       }),
     });
   } catch {
@@ -99,6 +101,18 @@ export function KairosAuthProvider({ required, children }: ProviderProps) {
       loading,
       required,
       user,
+      signInWithPassword: async (email: string, password: string) => {
+        const client = getSupabaseBrowserClient();
+        if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
+        const result = await client.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+        if (result.error) throw new Error(result.error.message || "Falha ao entrar.");
+      },
+      signUpWithPassword: async (email: string, password: string) => {
+        const client = getSupabaseBrowserClient();
+        if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
+        const result = await client.auth.signUp({ email: email.trim().toLowerCase(), password });
+        if (result.error) throw new Error(result.error.message || "Falha ao criar conta.");
+      },
       signInWithGoogle: async (nextPath?: string) => {
         const client = getSupabaseBrowserClient();
         if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
