@@ -8,11 +8,6 @@ export type OrganizationContext = {
   role: OrganizationRole;
 };
 
-function organizationSlug(email: string, userId: string): string {
-  const base = email.split("@")[0]?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "empresa";
-  return `${base}-${userId.slice(0, 8)}`;
-}
-
 export async function resolveOrganizationContext(
   supabase: SupabaseClient,
   userId: string,
@@ -75,29 +70,5 @@ export async function resolveOrganizationContext(
     };
   }
 
-  const fallbackName = normalizedEmail ? normalizedEmail.split("@")[0] : "Nova empresa";
-  const createdOrganization = await supabase
-    .from("organizations")
-    .insert({
-      name: fallbackName,
-      slug: organizationSlug(normalizedEmail, userId),
-      created_by: userId,
-    })
-    .select("id, name")
-    .single();
-  if (createdOrganization.error || !createdOrganization.data) throw createdOrganization.error;
-
-  const createdMembership = await supabase.from("organization_members").insert({
-    organization_id: createdOrganization.data.id,
-    user_id: userId,
-    role: "owner",
-    status: "active",
-  });
-  if (createdMembership.error) throw createdMembership.error;
-
-  return {
-    organizationId: createdOrganization.data.id,
-    organizationName: createdOrganization.data.name,
-    role: "owner",
-  };
+  return null;
 }

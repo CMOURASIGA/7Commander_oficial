@@ -10,7 +10,6 @@ type KairosAuthState = {
   required: boolean;
   user: User | null;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUpWithPassword: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (nextPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -106,17 +105,6 @@ export function KairosAuthProvider({ required, children }: ProviderProps) {
         if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
         const result = await client.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
         if (result.error) throw new Error(result.error.message || "Falha ao entrar.");
-      },
-      signUpWithPassword: async (email: string, password: string) => {
-        const client = getSupabaseBrowserClient();
-        if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
-        const redirectUrl = new URL("/auth/callback", window.location.origin);
-        const result = await client.auth.signUp({
-          email: email.trim().toLowerCase(),
-          password,
-          options: { emailRedirectTo: redirectUrl.toString() },
-        });
-        if (result.error) throw new Error(result.error.message || "Falha ao criar conta.");
       },
       signInWithGoogle: async (nextPath?: string) => {
         const client = getSupabaseBrowserClient();

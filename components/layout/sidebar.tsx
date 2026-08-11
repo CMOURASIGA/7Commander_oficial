@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_SUBTITLE } from "@/lib/brand";
 import { DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
+import { getClientAuthHeaders } from "@/lib/client-auth";
 
 const NAV_ITEMS = [
   { section: "Principal", href: "/", label: "Inicio" },
@@ -28,6 +29,16 @@ export function Sidebar() {
   useEffect(() => {
     const refreshBrand = () => setClientBrand(getClientBrandSettings());
     refreshBrand();
+    void fetch("/api/organization/context", { headers: getClientAuthHeaders() }).then(async (response) => {
+      if (!response.ok) return;
+      const result = await response.json();
+      const branding = result.organization?.branding ?? {};
+      const next = { clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor };
+      window.localStorage.setItem("7commander-client-brand", JSON.stringify(next));
+      setClientBrand(next);
+      document.documentElement.style.setProperty("--accent", next.primaryColor);
+      document.documentElement.style.setProperty("--brand-highlight", next.highlightColor);
+    }).catch(() => undefined);
     window.addEventListener("client-brand-updated", refreshBrand);
     return () => window.removeEventListener("client-brand-updated", refreshBrand);
   }, []);

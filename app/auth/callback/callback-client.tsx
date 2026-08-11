@@ -75,7 +75,7 @@ export function AuthCallbackClient() {
       }
 
       if (!active) return;
-      const next = queryParams.get("next") || "/";
+      const next = queryParams.get("activated") === "1" ? "/account/activated" : (queryParams.get("next") || "/");
       router.replace(next);
     }
 

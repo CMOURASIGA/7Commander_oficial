@@ -1,0 +1,37 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { getClientAuthHeaders } from "@/lib/client-auth";
+
+const MODULES = ["projects", "daily", "kairos", "voice", "knowledge", "clients", "activities", "memory"];
+type Client = { id:string; name:string; legal_name?:string; tax_id?:string; status:string; plan:string; contract_start?:string; contract_end?:string; licensed_users:number; branding?:{displayName?:string;logoUrl?:string;primaryColor?:string;secondaryColor?:string} };
+
+export default function PlatformAdminPage() {
+  const [clients,setClients]=useState<Client[]>([]); const [selected,setSelected]=useState("");
+  const [error,setError]=useState(""); const [message,setMessage]=useState(""); const [loading,setLoading]=useState(true);
+  async function load(){ setLoading(true); const r=await fetch("/api/platform/clients",{headers:getClientAuthHeaders()}); const j=await r.json(); if(!r.ok)setError(j.error); else {setClients(j.clients||[]); if(!selected&&j.clients?.[0])setSelected(j.clients[0].id);} setLoading(false); }
+  useEffect(()=>{void load()},[]);
+  async function createClient(e:FormEvent<HTMLFormElement>){e.preventDefault();setError("");setMessage("");const f=new FormData(e.currentTarget);const payload={name:f.get("name"),legalName:f.get("legalName"),taxId:f.get("taxId"),email:f.get("email"),phone:f.get("phone"),contractStart:f.get("contractStart"),contractEnd:f.get("contractEnd"),billingDay:f.get("billingDay"),licensedUsers:f.get("licensedUsers"),plan:f.get("plan"),status:"active",branding:{displayName:f.get("brandName")||f.get("name"),logoUrl:f.get("logoUrl"),primaryColor:f.get("primaryColor"),secondaryColor:f.get("secondaryColor")},modules:MODULES};const r=await fetch("/api/platform/clients",{method:"POST",headers:getClientAuthHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload)});const j=await r.json();if(!r.ok)setError(j.error);else{setMessage("Cliente cadastrado com sucesso.");e.currentTarget.reset();await load();}}
+  async function createUser(e:FormEvent<HTMLFormElement>){e.preventDefault();setError("");setMessage("");const f=new FormData(e.currentTarget);const r=await fetch("/api/platform/users",{method:"POST",headers:getClientAuthHeaders({"Content-Type":"application/json"}),body:JSON.stringify({organizationId:selected,name:f.get("name"),email:f.get("email"),temporaryPassword:f.get("password"),role:f.get("role")})});const j=await r.json();if(!r.ok)setError(j.error);else{setMessage("Usuario criado. O e-mail de confirmacao foi enviado.");e.currentTarget.reset();}}
+  return <div className="min-h-screen bg-slate-100 p-5 md:p-8"><div className="mx-auto max-w-7xl">
+    <div className="mb-6 rounded-3xl bg-slate-950 p-7 text-white"><p className="text-xs font-bold uppercase tracking-[.22em] text-sky-400">Consult Services</p><h1 className="mt-2 text-3xl font-semibold">Administração do 7Commander</h1><p className="mt-2 text-sm text-slate-300">Clientes, contratos, licenças, identidade visual e usuários.</p></div>
+    {error?<div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>:null}{message?<div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">{message}</div>:null}
+    <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+      <form onSubmit={createClient} className="rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Cadastrar cliente</h2><div className="mt-5 grid gap-4 md:grid-cols-2">
+        <label className="text-sm">Nome fantasia<input name="name" required className="workspace-input mt-1"/></label><label className="text-sm">Razão social<input name="legalName" required className="workspace-input mt-1"/></label>
+        <label className="text-sm">CNPJ<input name="taxId" required className="workspace-input mt-1" placeholder="00.000.000/0000-00"/></label><label className="text-sm">Plano<select name="plan" className="workspace-input mt-1"><option value="professional">Profissional</option><option value="business">Business</option><option value="enterprise">Enterprise</option></select></label>
+        <label className="text-sm">E-mail<input name="email" type="email" className="workspace-input mt-1"/></label><label className="text-sm">Telefone<input name="phone" className="workspace-input mt-1"/></label>
+        <label className="text-sm">Início do contrato<input name="contractStart" type="date" required className="workspace-input mt-1"/></label><label className="text-sm">Fim do contrato<input name="contractEnd" type="date" required className="workspace-input mt-1"/></label>
+        <label className="text-sm">Dia de vencimento<input name="billingDay" type="number" min="1" max="31" className="workspace-input mt-1"/></label><label className="text-sm">Usuários contratados<input name="licensedUsers" type="number" min="1" defaultValue="10" className="workspace-input mt-1"/></label>
+        <label className="text-sm">Nome exibido<input name="brandName" className="workspace-input mt-1"/></label><label className="text-sm">URL da logo<input name="logoUrl" type="url" className="workspace-input mt-1"/></label>
+        <label className="text-sm">Cor principal<input name="primaryColor" type="color" defaultValue="#003B73" className="mt-1 h-11 w-full rounded-lg border"/></label><label className="text-sm">Cor de destaque<input name="secondaryColor" type="color" defaultValue="#00AEEF" className="mt-1 h-11 w-full rounded-lg border"/></label>
+      </div><button className="mt-5 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Salvar cliente</button></form>
+      <div className="space-y-5"><form onSubmit={createUser} className="rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Criar usuário</h2><div className="mt-5 space-y-4">
+        <label className="text-sm">Cliente<select value={selected} onChange={e=>setSelected(e.target.value)} required className="workspace-input mt-1"><option value="">Selecione</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+        <label className="text-sm">Nome<input name="name" required className="workspace-input mt-1"/></label><label className="text-sm">E-mail<input name="email" type="email" required className="workspace-input mt-1"/></label>
+        <label className="text-sm">Senha temporária<input name="password" type="password" minLength={8} required className="workspace-input mt-1"/></label><label className="text-sm">Perfil<select name="role" className="workspace-input mt-1"><option value="owner">Responsável</option><option value="admin">Administrador</option><option value="manager">Gestor</option><option value="member">Usuário</option></select></label>
+      </div><button className="mt-5 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Criar e enviar confirmação</button></form>
+      <section className="rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Clientes</h2>{loading?<p className="mt-3 text-sm">Carregando...</p>:<div className="mt-4 space-y-3">{clients.map(c=><div key={c.id} className="rounded-xl border p-4"><div className="flex justify-between gap-3"><strong>{c.name}</strong><span className="text-xs uppercase text-emerald-700">{c.status}</span></div><p className="mt-1 text-xs text-slate-500">{c.tax_id} · {c.plan} · {c.licensed_users} usuários</p><p className="mt-1 text-xs text-slate-500">Contrato: {c.contract_start||"-"} a {c.contract_end||"-"}</p></div>)}</div>}</section></div>
+    </div></div></div>;
+}
+

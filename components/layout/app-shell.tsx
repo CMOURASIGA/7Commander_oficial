@@ -14,8 +14,8 @@ export function AppShell({ children }: AppShellProps) {
   const auth = useKairosAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const canBypassAuth =
-    pathname === "/login" || pathname.startsWith("/auth/callback");
+  const canBypassAuth = pathname === "/login" || pathname.startsWith("/auth/callback") || pathname.startsWith("/account/");
+  const isPlatformAdmin = pathname.startsWith("/admin");
   const mustWaitForAuth = auth.required && auth.loading && !canBypassAuth;
   const mustBlock = auth.required && !auth.loading && !auth.user && !canBypassAuth;
 
@@ -69,6 +69,8 @@ export function AppShell({ children }: AppShellProps) {
       </div>
     );
   }
+
+  if (isPlatformAdmin) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">

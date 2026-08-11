@@ -1,0 +1,3 @@
+import Link from "next/link";
+export default function ActivatedPage(){return <section className="w-full max-w-xl rounded-3xl border bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-emerald-700">Cadastro confirmado</p><h1 className="mt-3 text-2xl font-semibold">Seu acesso foi ativado</h1><p className="mt-3 text-sm leading-6 text-slate-600">O e-mail foi confirmado com sucesso. Agora você pode entrar no 7Commander usando a senha temporária recebida e criar sua senha definitiva.</p><Link href="/login" className="mt-6 inline-flex rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Acessar o 7Commander</Link></section>}
+

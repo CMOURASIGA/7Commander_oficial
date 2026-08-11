@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (auth.loading || !auth.user) return;
-    router.replace(nextPath);
+    router.replace(auth.user.user_metadata?.must_change_password ? "/account/change-password" : nextPath);
   }, [auth.loading, auth.user, nextPath, router]);
 
   return (
@@ -56,15 +56,9 @@ export default function LoginPage() {
           <button type="submit" disabled={submitting} className="w-full rounded-xl bg-(--accent) px-4 py-3 text-sm font-semibold text-(--accent-contrast)">
             {submitting ? "Entrando..." : "Entrar"}
           </button>
-          <button type="button" disabled={submitting} onClick={() => void (async () => {
-            setSubmitting(true); setError(null); setMessage(null);
-            try { await auth.signUpWithPassword(email, password); setMessage("Conta criada. Verifique seu e-mail se a confirmação estiver habilitada."); }
-            catch (err) { setError(err instanceof Error ? err.message : "Falha ao criar conta."); }
-            finally { setSubmitting(false); }
-          })()} className="w-full rounded-xl border border-(--border) px-4 py-3 text-sm font-semibold text-(--text-primary)">Criar primeiro acesso</button>
         </form>
         <p className="mt-3 text-center text-xs leading-5 text-(--text-secondary)">
-          Use o mesmo e-mail que recebeu o convite do administrador da empresa.
+          O acesso é criado pela Consult Services e vinculado à empresa contratante.
         </p>
         {message ? <p className="mt-3 text-center text-sm text-(--success)">{message}</p> : null}
         {error ? <p className="mt-3 text-center text-sm text-red-600">{error}</p> : null}
