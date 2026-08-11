@@ -58,8 +58,5 @@ create policy organization_modules_tenant_read on organization_modules for selec
 drop policy if exists platform_audit_admin_read on platform_audit_log;
 create policy platform_audit_admin_read on platform_audit_log for select using (public.is_platform_admin());
 
--- The first existing account becomes the initial Consult Services super administrator.
-insert into platform_admins (user_id, role)
-select id, 'superadmin' from auth.users order by created_at asc limit 1
-on conflict (user_id) do nothing;
-
+-- Platform administrators are granted explicitly after the migration.
+-- Never infer privileged access from account creation order.
