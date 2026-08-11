@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useKairosAuth } from "@/components/auth/kairos-auth-provider";
 import { getClientAuthHeaders } from "@/lib/client-auth";
@@ -25,6 +25,10 @@ export default function PlatformAdminPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoFileName, setLogoFileName] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#003B73");
+  const [secondaryColor, setSecondaryColor] = useState("#00AEEF");
 
   async function load() {
     setLoading(true); setError("");
@@ -40,6 +44,57 @@ export default function PlatformAdminPage() {
 
   useEffect(() => { void load(); }, []);
 
+  function selectLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Selecione um arquivo de imagem para a logo.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("A logo deve ter no máximo 2 MB.");
+      event.target.value = "";
+      return;
+    }
+    setError("");
+    setLogoFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const nextLogoUrl = String(reader.result);
+      setLogoUrl(nextLogoUrl);
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 48;
+        const context = canvas.getContext("2d");
+        if (!context) return;
+        context.drawImage(image, 0, 0, 48, 48);
+        const colors = new Map<string, number>();
+        const pixels = context.getImageData(0, 0, 48, 48).data;
+        for (let index = 0; index < pixels.length; index += 4) {
+          if (pixels[index + 3] < 180) continue;
+          const red = Math.min(255, Math.round(pixels[index] / 32) * 32);
+          const green = Math.min(255, Math.round(pixels[index + 1] / 32) * 32);
+          const blue = Math.min(255, Math.round(pixels[index + 2] / 32) * 32);
+          const key = `${red},${green},${blue}`;
+          colors.set(key, (colors.get(key) ?? 0) + 1);
+        }
+        const palette = [...colors.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key.split(",").map(Number));
+        const toHex = (color: number[]) => `#${color.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+        const saturated = palette.filter(([red, green, blue]) => Math.max(red, green, blue) - Math.min(red, green, blue) > 70);
+        if (saturated[0]) setPrimaryColor(toHex(saturated[0]));
+        if (saturated[1]) setSecondaryColor(toHex(saturated[1]));
+      };
+      image.src = nextLogoUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    setLogoUrl("");
+    setLogoFileName("");
+  }
+
   async function createCompany(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setMessage("");
     const form = event.currentTarget; const data = new FormData(form);
@@ -51,13 +106,13 @@ export default function PlatformAdminPage() {
       billingDay: data.get("billingDay"), licensedUsers: data.get("licensedUsers"),
       address: { street: data.get("street"), number: data.get("number"), city: data.get("city"), state: data.get("state"), zipCode: data.get("zipCode") },
       contractContact: { name: data.get("contactName"), email: data.get("contactEmail"), phone: data.get("contactPhone") },
-      branding: { displayName: data.get("brandName") || data.get("name"), logoUrl: data.get("logoUrl"), primaryColor: data.get("primaryColor"), secondaryColor: data.get("secondaryColor") },
+      branding: { displayName: data.get("brandName") || data.get("name"), logoUrl, primaryColor, secondaryColor },
       modules,
     };
     const response = await fetch("/api/platform/clients", { method: "POST", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) });
     const result = await response.json();
     if (!response.ok) setError(result.error || "Não foi possível cadastrar a empresa.");
-    else { setMessage("Empresa licenciada cadastrada com sucesso."); form.reset(); await load(); }
+    else { setMessage("Empresa licenciada cadastrada com sucesso."); form.reset(); removeLogo(); setPrimaryColor("#003B73"); setSecondaryColor("#00AEEF"); await load(); }
   }
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
@@ -110,7 +165,25 @@ export default function PlatformAdminPage() {
               <Field label="Estado"><input name="state" maxLength={2} className="workspace-input mt-1" /></Field><div />
             </div>
             <h3 className="mt-7 font-semibold">White label da empresa</h3>
-            <div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Nome exibido"><input name="brandName" className="workspace-input mt-1" /></Field><Field label="URL da logo"><input name="logoUrl" type="url" className="workspace-input mt-1" /></Field><Field label="Cor principal"><input name="primaryColor" type="color" defaultValue="#003B73" className="mt-1 h-11 w-full rounded-lg border" /></Field><Field label="Cor de destaque"><input name="secondaryColor" type="color" defaultValue="#00AEEF" className="mt-1 h-11 w-full rounded-lg border" /></Field></div>
+            <p className="mt-1 text-sm text-slate-500">Envie a logo da empresa. As cores predominantes serão sugeridas e poderão ser ajustadas antes de salvar.</p>
+            <div className="mt-3 grid gap-4 lg:grid-cols-[180px_1fr]">
+              <div className="flex min-h-32 items-center justify-center rounded-xl border border-slate-200 bg-white p-4">
+                {logoUrl ? <img src={logoUrl} alt="Prévia da logo da empresa" className="max-h-24 max-w-full rounded-lg object-contain" /> : <span className="text-center text-xs text-slate-400">Prévia da logo</span>}{/* eslint-disable-line @next/next/no-img-element */}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Nome exibido"><input name="brandName" className="workspace-input mt-1" /></Field>
+                <Field label="Logo da empresa">
+                  <span className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="cursor-pointer rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Escolher arquivo</span>
+                    <span className="text-xs font-normal text-slate-500">{logoFileName || "Nenhum arquivo selecionado"}</span>
+                  </span>
+                  <input type="file" accept="image/*" onChange={selectLogo} className="sr-only" />
+                </Field>
+                <Field label="Cor principal"><input name="primaryColor" type="color" value={primaryColor} onChange={(event) => setPrimaryColor(event.target.value)} className="mt-1 h-11 w-full cursor-pointer rounded-lg border border-slate-200 bg-white p-1" /></Field>
+                <Field label="Cor de destaque"><input name="secondaryColor" type="color" value={secondaryColor} onChange={(event) => setSecondaryColor(event.target.value)} className="mt-1 h-11 w-full cursor-pointer rounded-lg border border-slate-200 bg-white p-1" /></Field>
+                {logoUrl ? <button type="button" onClick={removeLogo} className="w-fit text-sm font-semibold text-red-600">Remover logo</button> : null}
+              </div>
+            </div>
             <h3 className="mt-7 font-semibold">Módulos liberados</h3><div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">{MODULES.map(([key, label]) => <label key={key} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" name={`module-${key}`} defaultChecked />{label}</label>)}</div>
             <button className="mt-6 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Salvar empresa licenciada</button>
           </form>
