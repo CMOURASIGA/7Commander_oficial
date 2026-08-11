@@ -110,7 +110,7 @@ export function KairosAuthProvider({ required, children }: ProviderProps) {
       signUpWithPassword: async (email: string, password: string) => {
         const client = getSupabaseBrowserClient();
         if (!client) throw new Error("Cliente Supabase indisponivel no navegador.");
-        const result = await client.auth.signUp({ email: email.trim().toLowerCase(), password });
+        const redirectUrl = new URL("/auth/callback", window.location.origin);\n        const result = await client.auth.signUp({\n          email: email.trim().toLowerCase(),\n          password,\n          options: { emailRedirectTo: redirectUrl.toString() },\n        });
         if (result.error) throw new Error(result.error.message || "Falha ao criar conta.");
       },
       signInWithGoogle: async (nextPath?: string) => {
