@@ -1,46 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_SUBTITLE } from "@/lib/brand";
-import { applyClientBrandSettings, completeClientBrand, DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
-import { getClientAuthHeaders } from "@/lib/client-auth";
+import { DEFAULT_CLIENT_BRAND, ClientBrandSettings } from "@/lib/brand-settings";
 
 const NAV_ITEMS = [
-  { section: "Principal", href: "/", label: "Inicio" },
-  { section: "Principal", href: "/voice", label: "Voice Room" },
-  { section: "Principal", href: "/chat", label: "Dashboard Kairos" },
-  { section: "Principal", href: "/daily", label: "Daily" },
-  { section: "Dados", href: "/clients", label: "Clientes" },
-  { section: "Dados", href: "/projects", label: "Projetos" },
-  { section: "Dados", href: "/activities", label: "Atividades" },
-  { section: "Dados", href: "/memory", label: "Memoria" },
-  { section: "Sistema", href: "/help", label: "Ajuda" },
-  { section: "Sistema", href: "/settings", label: "Configuracoes" },
+  { section: "Principal", href: "/", label: "Inicio", module: "" },
+  { section: "Principal", href: "/voice", label: "Voice Room", module: "voice" },
+  { section: "Principal", href: "/chat", label: "Dashboard Kairos", module: "kairos" },
+  { section: "Principal", href: "/daily", label: "Daily", module: "daily" },
+  { section: "Dados", href: "/clients", label: "Clientes", module: "clients" },
+  { section: "Dados", href: "/projects", label: "Projetos", module: "projects" },
+  { section: "Dados", href: "/activities", label: "Atividades", module: "activities" },
+  { section: "Dados", href: "/memory", label: "Memoria", module: "memory" },
+  { section: "Sistema", href: "/help", label: "Ajuda", module: "" },
+  { section: "Sistema", href: "/settings", label: "Configuracoes", module: "" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ clientBrand = DEFAULT_CLIENT_BRAND, enabledModules = [] }: { clientBrand?: ClientBrandSettings; enabledModules?: string[] }) {
   const pathname = usePathname();
-  const [clientBrand, setClientBrand] = useState<ClientBrandSettings>(DEFAULT_CLIENT_BRAND);
-  const sections = Array.from(new Set(NAV_ITEMS.map((item) => item.section)));
+  const visibleItems = NAV_ITEMS.filter((item) => !item.module || enabledModules.includes(item.module));
+  const sections = Array.from(new Set(visibleItems.map((item) => item.section)));
   const isConsultServicesBrand = clientBrand.logoUrl === DEFAULT_CLIENT_BRAND.logoUrl;
-
-  useEffect(() => {
-    const refreshBrand = () => setClientBrand(getClientBrandSettings());
-    refreshBrand();
-    void fetch("/api/organization/context", { headers: getClientAuthHeaders() }).then(async (response) => {
-      if (!response.ok) return;
-      const result = await response.json();
-      const branding = result.organization?.branding ?? {};
-      const next = completeClientBrand({ clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor, sidebarColor: branding.sidebarColor, softColor: branding.softColor, contrastColor: branding.contrastColor });
-      window.localStorage.setItem("7commander-client-brand", JSON.stringify(next));
-      setClientBrand(next);
-      applyClientBrandSettings(next);
-    }).catch(() => undefined);
-    window.addEventListener("client-brand-updated", refreshBrand);
-    return () => window.removeEventListener("client-brand-updated", refreshBrand);
-  }, []);
 
   return (
     <aside className="sidebar-shell relative w-full overflow-hidden border-b border-white/15 md:min-h-screen md:w-[250px] md:self-stretch md:border-b-0 md:border-r">
@@ -63,7 +45,7 @@ export function Sidebar() {
               {section}
             </p>
             <div className="flex flex-wrap gap-2 md:flex-col">
-              {NAV_ITEMS.filter((item) => item.section === section).map((item) => {
+              {visibleItems.filter((item) => item.section === section).map((item) => {
                 const isActive =
                   item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
                 return (

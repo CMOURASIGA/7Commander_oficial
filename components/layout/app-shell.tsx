@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { useKairosAuth } from "@/components/auth/kairos-auth-provider";
 import { getClientAuthHeaders } from "@/lib/client-auth";
+import { applyClientBrandSettings, completeClientBrand, DEFAULT_CLIENT_BRAND, type ClientBrandSettings } from "@/lib/brand-settings";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -16,6 +17,9 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [licenseBlocked, setLicenseBlocked] = useState(false);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [clientBrand, setClientBrand] = useState<ClientBrandSettings>(DEFAULT_CLIENT_BRAND);
+  const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const canBypassAuth = pathname === "/login" || pathname.startsWith("/auth/callback") || pathname.startsWith("/account/");
   const isPlatformAdmin = pathname.startsWith("/admin");
   const mustWaitForAuth = auth.required && auth.loading && !canBypassAuth;
@@ -27,9 +31,23 @@ export function AppShell({ children }: AppShellProps) {
   }, [mustBlock, pathname, router]);
 
   useEffect(() => {
-    if (auth.loading || !auth.user || canBypassAuth || isPlatformAdmin) { setLicenseBlocked(false); return; }
-    void fetch("/api/organization/context", { headers: getClientAuthHeaders() }).then((response) => setLicenseBlocked(response.status === 403)).catch(() => undefined);
-  }, [auth.loading, auth.user, canBypassAuth, isPlatformAdmin, pathname]);
+    if (auth.loading || !auth.user || canBypassAuth || isPlatformAdmin) { setLicenseBlocked(false); setContextLoading(false); return; }
+    let active = true;
+    setContextLoading(true);
+    void fetch("/api/organization/context", { headers: getClientAuthHeaders() }).then(async (response) => {
+      if (!active) return;
+      if (!response.ok) { setLicenseBlocked(response.status === 403); return; }
+      const result = await response.json();
+      const branding = result.organization?.branding ?? {};
+      const next = completeClientBrand({ clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor, sidebarColor: branding.sidebarColor, softColor: branding.softColor, contrastColor: branding.contrastColor });
+      window.localStorage.setItem("7commander-client-brand", JSON.stringify(next));
+      applyClientBrandSettings(next);
+      setClientBrand(next);
+      setEnabledModules((result.organization?.organization_modules ?? []).filter((item: { enabled: boolean }) => item.enabled).map((item: { module_key: string }) => item.module_key));
+      setLicenseBlocked(result.licenseAllowed === false);
+    }).catch(() => { if (active) setLicenseBlocked(true); }).finally(() => { if (active) setContextLoading(false); });
+    return () => { active = false; };
+  }, [auth.loading, auth.user, canBypassAuth, isPlatformAdmin]);
 
   if (canBypassAuth) {
     return (
@@ -79,11 +97,13 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isPlatformAdmin) return <>{children}</>;
 
+  if (contextLoading) return <div className="min-h-screen bg-(--bg-page)"><main className="mx-auto flex min-h-screen w-full max-w-xl items-center justify-center px-4"><section className="w-full rounded-3xl border border-(--border) bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-(--accent)">Workspace</p><h1 className="mt-3 text-2xl font-semibold">Preparando o ambiente da sua empresa</h1><p className="mt-3 text-sm text-slate-600">Carregando identidade visual, licença e módulos liberados.</p></section></main></div>;
+
   if (licenseBlocked) return <div className="min-h-screen bg-(--bg-page)"><main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-4"><section className="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-amber-700">Acesso indisponível</p><h1 className="mt-3 text-2xl font-semibold">Licença da empresa inativa ou fora da vigência</h1><p className="mt-3 text-sm leading-6 text-slate-600">Os dados permanecem preservados. Entre em contato com a administração da Consult Services para regularizar ou reativar o acesso.</p><button type="button" onClick={() => void auth.signOut().then(() => router.replace("/login"))} className="mt-6 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Voltar ao login</button></section></main></div>;
 
   return (
     <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">
-      <Sidebar />
+      <Sidebar clientBrand={clientBrand} enabledModules={enabledModules} />
       <div className="flex min-h-screen flex-1 flex-col">
         <Header />
         <main className="flex-1 overflow-x-hidden p-4 md:p-5">{children}</main>

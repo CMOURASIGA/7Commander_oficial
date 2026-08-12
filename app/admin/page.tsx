@@ -23,6 +23,10 @@ type LicensedCompany = {
   quotas?: { lifecycle?: { inactiveAt?: string; retentionUntil?: string; inactiveReason?: string; inactiveBy?: string; reactivatedAt?: string; reactivatedBy?: string } };
 };
 
+type CompanyUser = { id: string; user_id: string; name: string; email: string; role: string; status: string; created_at: string };
+type AuditEvent = { id: string; action: string; entity_type: string; details?: Record<string, unknown>; created_at: string };
+type AdminTab = "new" | "companies" | "details" | "users" | "history";
+
 export default function PlatformAdminPage() {
   const auth = useKairosAuth();
   const router = useRouter();
@@ -31,6 +35,10 @@ export default function PlatformAdminPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<AdminTab>("companies");
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<CompanyUser[]>([]);
+  const [events, setEvents] = useState<AuditEvent[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoFileName, setLogoFileName] = useState("");
   const [brandDisplayName, setBrandDisplayName] = useState("");
@@ -44,6 +52,7 @@ export default function PlatformAdminPage() {
   const [editSecondaryColor, setEditSecondaryColor] = useState("#00AEEF");
   const selectedCompany = companies.find((company) => company.id === selected);
   const palette = useMemo(() => deriveBrandPalette(primaryColor, secondaryColor), [primaryColor, secondaryColor]);
+  const filteredCompanies = useMemo(() => { const query = search.trim().toLowerCase(); return query ? companies.filter((company) => [company.name, company.legal_name, company.tax_id, company.email, company.contract_contact?.name].some((value) => String(value || "").toLowerCase().includes(query))) : companies; }, [companies, search]);
 
   async function load() {
     setLoading(true); setError("");
@@ -58,6 +67,25 @@ export default function PlatformAdminPage() {
   }
 
   useEffect(() => { void load(); }, []);
+
+  async function loadCompanyWorkspace(companyId: string, target: AdminTab = "details") {
+    setSelected(companyId); setTab(target); setError("");
+    const [usersResponse, eventsResponse] = await Promise.all([
+      fetch(`/api/platform/users?organizationId=${encodeURIComponent(companyId)}`, { headers: getClientAuthHeaders() }),
+      fetch(`/api/platform/audit?organizationId=${encodeURIComponent(companyId)}`, { headers: getClientAuthHeaders() }),
+    ]);
+    const usersResult = await usersResponse.json(); const eventsResult = await eventsResponse.json();
+    if (usersResponse.ok) setUsers(usersResult.users || []); else setError(usersResult.error || "Não foi possível carregar os usuários.");
+    if (eventsResponse.ok) setEvents(eventsResult.events || []);
+  }
+
+  async function uploadLogo(file: File, organizationId?: string) {
+    const body = new FormData(); body.append("file", file); if (organizationId) body.append("organizationId", organizationId);
+    const response = await fetch("/api/platform/branding/logo", { method: "POST", headers: getClientAuthHeaders(), body });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Não foi possível armazenar a logo.");
+    return String(result.url);
+  }
 
   function selectLogo(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -106,6 +134,7 @@ export default function PlatformAdminPage() {
       image.src = nextLogoUrl;
     };
     reader.readAsDataURL(file);
+    void uploadLogo(file).then(setLogoUrl).catch((uploadError) => setError(uploadError instanceof Error ? uploadError.message : "Falha no envio da logo."));
   }
 
   function removeLogo() {
@@ -125,9 +154,7 @@ export default function PlatformAdminPage() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/") || file.size > 2 * 1024 * 1024) { setError("Selecione uma imagem de até 2 MB."); return; }
-    const reader = new FileReader();
-    reader.onload = () => setEditLogoUrl(String(reader.result));
-    reader.readAsDataURL(file);
+    void uploadLogo(file, selectedCompany?.id).then(setEditLogoUrl).catch((uploadError) => setError(uploadError instanceof Error ? uploadError.message : "Falha no envio da logo."));
   }
 
   async function createCompany(event: FormEvent<HTMLFormElement>) {
@@ -156,7 +183,15 @@ export default function PlatformAdminPage() {
     const response = await fetch("/api/platform/users", { method: "POST", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ organizationId: selected, name: data.get("name"), email: data.get("email"), temporaryPassword: data.get("password"), role: data.get("role") }) });
     const result = await response.json();
     if (!response.ok) setError(result.error || "Não foi possível cadastrar o usuário.");
-    else { setMessage(result.existingUser ? "Usuário existente vinculado à empresa com sucesso." : "Usuário criado. O e-mail de confirmação foi enviado."); form.reset(); await load(); }
+    else { setMessage(result.existingUser ? "Usuário existente vinculado à empresa com sucesso." : "Usuário criado. O e-mail de confirmação foi enviado."); form.reset(); await load(); await loadCompanyWorkspace(selected, "users"); }
+  }
+
+  async function updateUser(user: CompanyUser, changes: Partial<CompanyUser>) {
+    setError(""); setMessage("");
+    const response = await fetch(`/api/platform/users/${user.id}`, { method: "PATCH", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ ...user, ...changes }) });
+    const result = await response.json();
+    if (!response.ok) setError(result.error || "Não foi possível atualizar o usuário.");
+    else { setMessage("Usuário atualizado com sucesso."); await loadCompanyWorkspace(selected, "users"); }
   }
 
   async function updateCompany(event: FormEvent<HTMLFormElement>) {
@@ -179,7 +214,7 @@ export default function PlatformAdminPage() {
     const response = await fetch(`/api/platform/clients/${selectedCompany.id}`, { method: "PATCH", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) });
     const result = await response.json();
     if (!response.ok) setError(result.error || "Não foi possível atualizar a empresa.");
-    else { setMessage(status === "suspended" ? "Empresa inativada. O acesso foi bloqueado e a retenção iniciada." : "Empresa licenciada atualizada com sucesso."); setEditOpen(false); await load(); }
+    else { setMessage(status === "suspended" ? "Empresa inativada. O acesso foi bloqueado e a retenção iniciada." : "Empresa licenciada atualizada com sucesso."); setEditOpen(false); await load(); await loadCompanyWorkspace(selectedCompany.id, "details"); }
   }
 
   async function signOut() { await auth.signOut(); router.replace("/login"); }
@@ -199,10 +234,14 @@ export default function PlatformAdminPage() {
         </nav>
         {error ? <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{message}</div> : null}
-        <RetentionAlerts companies={companies} onSelect={(id) => setSelected(id)} />
+        <RetentionAlerts companies={companies} onSelect={(id) => void loadCompanyWorkspace(id, "details")} />
 
-        <div className="grid gap-6 xl:grid-cols-[1.25fr_.75fr]">
-          <form onSubmit={createCompany} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          {([['new', 'Nova empresa'], ['companies', 'Empresas'], ['details', 'Cadastro e edição'], ['users', 'Usuários'], ['history', 'Histórico']] as const).map(([key, label]) => <button key={key} type="button" disabled={(key === "details" || key === "users" || key === "history") && !selectedCompany} onClick={() => { if (selected && (key === "details" || key === "users" || key === "history")) void loadCompanyWorkspace(selected, key); else setTab(key); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${tab === key ? "bg-blue-700 text-white" : "text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"}`}>{label}</button>)}
+        </div>
+
+        <div>
+          <form onSubmit={createCompany} className={`${tab === "new" ? "" : "hidden"} rounded-3xl border border-slate-200 bg-white p-6 shadow-sm`}>
             <h2 className="text-xl font-semibold">Cadastrar empresa licenciada</h2><p className="mt-1 text-sm text-slate-500">Contrato, licença, módulos e identidade visual ficam isolados por empresa.</p>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <Field label="Nome fantasia"><input name="name" required className="workspace-input mt-1" /></Field>
@@ -249,16 +288,18 @@ export default function PlatformAdminPage() {
           </form>
 
           <div className="space-y-6">
-            <form onSubmit={createUser} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Usuários da empresa</h2><p className="mt-1 text-sm text-slate-500">Cada usuário será vinculado somente à empresa selecionada.</p><div className="mt-5 space-y-4">
+            <form onSubmit={createUser} className={`${tab === "users" ? "" : "hidden"} rounded-3xl border border-slate-200 bg-white p-6 shadow-sm`}><h2 className="text-xl font-semibold">Usuários de {selectedCompany?.name || "empresa"}</h2><p className="mt-1 text-sm text-slate-500">Cadastre, corrija ou inative acessos sem apagar o histórico.</p><div className="mt-5 grid gap-4 md:grid-cols-2">
               <Field label="Empresa licenciada"><select value={selected} onChange={(event) => setSelected(event.target.value)} required className="workspace-input mt-1"><option value="">Selecione</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></Field>
               <Field label="Nome"><input name="name" required className="workspace-input mt-1" /></Field><Field label="E-mail"><input name="email" type="email" required className="workspace-input mt-1" /></Field>
               <Field label="Senha temporária"><input name="password" type="password" minLength={8} className="workspace-input mt-1" /><small className="mt-1 block text-slate-500">Obrigatória apenas para um novo e-mail. Contas existentes serão apenas vinculadas.</small></Field>
               <Field label="Perfil"><select name="role" className="workspace-input mt-1"><option value="owner">Responsável</option><option value="admin">Administrador</option><option value="manager">Gestor</option><option value="member">Usuário</option></select></Field>
             </div><button className="mt-5 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Cadastrar usuário</button></form>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Empresas licenciadas</h2>{loading ? <p className="mt-3 text-sm">Carregando...</p> : companies.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhuma empresa cadastrada.</p> : <div className="mt-4 space-y-3">{companies.map((company) => <button type="button" onClick={() => setSelected(company.id)} key={company.id} className={`w-full rounded-xl border p-4 text-left ${selected === company.id ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><div className="flex justify-between gap-3"><strong>{company.name}</strong><span className="text-xs font-semibold uppercase text-emerald-700">{company.status}</span></div><p className="mt-1 text-xs text-slate-500">CNPJ: {company.tax_id || "-"}</p><p className="mt-1 text-xs text-slate-500">{company.plan} · {company.organization_members?.length || 0}/{company.licensed_users} usuários</p><p className="mt-1 text-xs text-slate-500">Contrato: {company.contract_start || "-"} a {company.contract_end || "-"}</p></button>)}</div>}</section>
+            {tab === "users" ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Usuários cadastrados</h2>{users.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhum usuário vinculado a esta empresa.</p> : <div className="mt-4 space-y-3">{users.map((user) => <UserEditor key={user.id} user={user} onSave={(changes) => void updateUser(user, changes)} />)}</div>}</section> : null}
 
-            {selectedCompany ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            {tab === "companies" ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><h2 className="text-xl font-semibold">Empresas licenciadas</h2><p className="mt-1 text-sm text-slate-500">Pesquise por nome, razão social, CNPJ, e-mail ou responsável.</p></div><Field label="Pesquisar"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Digite para localizar" className="workspace-input mt-1 min-w-72" /></Field></div>{loading ? <p className="mt-3 text-sm">Carregando...</p> : filteredCompanies.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhuma empresa encontrada.</p> : <div className="mt-5 grid gap-3 md:grid-cols-2">{filteredCompanies.map((company) => <button type="button" onClick={() => void loadCompanyWorkspace(company.id, "details")} key={company.id} className={`w-full rounded-xl border p-4 text-left ${selected === company.id ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><div className="flex justify-between gap-3"><strong>{company.name}</strong><span className={`text-xs font-semibold uppercase ${company.status === "active" ? "text-emerald-700" : "text-amber-700"}`}>{company.status === "suspended" ? "Inativa" : company.status}</span></div><p className="mt-1 text-xs text-slate-500">CNPJ: {company.tax_id || "-"}</p><p className="mt-1 text-xs text-slate-500">{company.plan} · {company.organization_members?.length || 0}/{company.licensed_users} usuários</p><p className="mt-1 text-xs text-slate-500">Contrato: {company.contract_start || "-"} a {company.contract_end || "-"}</p></button>)}</div>}</section> : null}
+
+            {selectedCompany && tab === "details" ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Cadastro selecionado</p><h2 className="mt-1 text-xl font-semibold">{selectedCompany.name}</h2></div><div className="flex items-center gap-2"><span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${selectedCompany.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{selectedCompany.status === "suspended" ? "Inativa" : selectedCompany.status}</span><button type="button" onClick={() => openEditor(selectedCompany)} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white">Editar</button></div></div>
               <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
                 <Detail label="Razão social" value={selectedCompany.legal_name} />
@@ -276,7 +317,9 @@ export default function PlatformAdminPage() {
               <div className="mt-5 rounded-2xl border border-slate-200 p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">White label</p><div className="mt-3 flex items-center gap-4">{selectedCompany.branding?.logoUrl ? <img src={selectedCompany.branding.logoUrl} alt={`Logo ${selectedCompany.name}`} className="h-16 w-20 rounded-lg border border-slate-200 object-contain p-1" /> : <div className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-slate-400">Sem logo</div>}<div><strong>{selectedCompany.branding?.displayName || selectedCompany.name}</strong><div className="mt-2 flex gap-2"><ColorSample label="Principal" color={selectedCompany.branding?.primaryColor} /><ColorSample label="Destaque" color={selectedCompany.branding?.secondaryColor} /></div></div></div></div>
               <div className="mt-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Módulos liberados</p><div className="mt-2 flex flex-wrap gap-2">{selectedCompany.organization_modules?.filter((module) => module.enabled).map((module) => <span key={module.module_key} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{MODULES.find(([key]) => key === module.module_key)?.[1] || module.module_key}</span>)}</div></div>
               {selectedCompany.status === "suspended" ? <RetentionNotice company={selectedCompany} /> : null}
+              <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5"><button type="button" onClick={() => openEditor(selectedCompany)} className="rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Editar cadastro, licença e white label</button><button type="button" onClick={() => setTab("users")} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">Ver usuários</button><button type="button" onClick={() => setTab("history")} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">Ver histórico</button></div>
             </section> : null}
+            {selectedCompany && tab === "history" ? <AuditHistory company={selectedCompany} events={events} /> : null}
           </div>
         </div>
       </div>
@@ -297,6 +340,21 @@ function Detail({ label, value }: { label: string; value?: string | number }) {
 function ColorSample({ label, color }: { label: string; color?: string }) {
   return <span className="flex items-center gap-1 text-xs text-slate-500"><i className="h-4 w-4 rounded-full border border-slate-200" style={{ backgroundColor: color || "#ffffff" }} />{label}: {color || "-"}</span>;
 }
+
+function UserEditor({ user, onSave }: { user: CompanyUser; onSave: (changes: Partial<CompanyUser>) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [role, setRole] = useState(user.role);
+  return <article className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-col justify-between gap-3 md:flex-row md:items-center"><div><strong>{user.name || user.email}</strong><p className="text-sm text-slate-500">{user.email} · {roleLabel(user.role)} · {user.status === "active" ? "Ativo" : "Inativo"}</p></div><div className="flex gap-2"><button type="button" onClick={() => setEditing((current) => !current)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">{editing ? "Cancelar" : "Editar"}</button><button type="button" onClick={() => { if (window.confirm(`${user.status === "active" ? "Inativar" : "Reativar"} este usuário?`)) onSave({ status: user.status === "active" ? "inactive" : "active" }); }} className={`rounded-lg px-3 py-2 text-xs font-semibold ${user.status === "active" ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>{user.status === "active" ? "Inativar" : "Reativar"}</button></div></div>{editing ? <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 md:grid-cols-3"><Field label="Nome"><input value={name} onChange={(event) => setName(event.target.value)} className="workspace-input mt-1" /></Field><Field label="E-mail"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="workspace-input mt-1" /></Field><Field label="Perfil"><select value={role} onChange={(event) => setRole(event.target.value)} className="workspace-input mt-1"><option value="owner">Responsável</option><option value="admin">Administrador</option><option value="manager">Gestor</option><option value="member">Usuário</option></select></Field><button type="button" onClick={() => { onSave({ name, email, role }); setEditing(false); }} className="w-fit rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Salvar usuário</button></div> : null}</article>;
+}
+
+function AuditHistory({ company, events }: { company: LicensedCompany; events: AuditEvent[] }) {
+  const labels: Record<string, string> = { "client.created": "Empresa cadastrada", "client.updated": "Cadastro atualizado", "client.status.inactive": "Empresa inativada", "client.status.active": "Empresa reativada", "user.provisioned": "Usuário criado", "user.linked": "Usuário vinculado", "user.updated": "Usuário atualizado", "user.status.active": "Usuário reativado", "user.status.inactive": "Usuário inativado" };
+  return <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Histórico de {company.name}</h2><p className="mt-1 text-sm text-slate-500">Últimas 100 ações administrativas registradas.</p>{events.length === 0 ? <p className="mt-5 text-sm text-slate-500">Ainda não há eventos registrados.</p> : <ol className="mt-5 space-y-3">{events.map((event) => <li key={event.id} className="rounded-xl border border-slate-200 p-4"><div className="flex justify-between gap-3"><strong>{labels[event.action] || event.action}</strong><time className="text-xs text-slate-500">{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(event.created_at))}</time></div><p className="mt-1 text-xs text-slate-500">{event.entity_type}</p></li>)}</ol>}</section>;
+}
+
+function roleLabel(role: string) { return ({ owner: "Responsável", admin: "Administrador", manager: "Gestor", member: "Usuário" } as Record<string, string>)[role] || role; }
 
 function retentionState(retentionUntil?: string) {
   if (!retentionUntil) return null;

@@ -5,6 +5,31 @@ import { getPublicEnv } from "@/lib/env";
 
 const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "member"]);
 
+export async function GET(request: NextRequest) {
+  const access = await requirePlatformAdmin(request);
+  if (!access.ok) return access.response;
+  const organizationId = request.nextUrl.searchParams.get("organizationId");
+  if (!organizationId) return NextResponse.json({ error: "Empresa licenciada obrigatoria." }, { status: 400 });
+
+  const memberships = await access.db.from("organization_members")
+    .select("id,user_id,role,status,created_at")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false });
+  if (memberships.error) return NextResponse.json({ error: memberships.error.message }, { status: 500 });
+
+  const userIds = (memberships.data ?? []).map((item) => item.user_id);
+  const profiles = userIds.length
+    ? await access.db.from("profiles").select("user_id,nome,email").in("user_id", userIds)
+    : { data: [], error: null };
+  if (profiles.error) return NextResponse.json({ error: profiles.error.message }, { status: 500 });
+  const profileByUser = new Map((profiles.data ?? []).map((profile) => [profile.user_id, profile]));
+  return NextResponse.json({ users: (memberships.data ?? []).map((membership) => ({
+    ...membership,
+    name: profileByUser.get(membership.user_id)?.nome ?? "",
+    email: profileByUser.get(membership.user_id)?.email ?? "",
+  })) });
+}
+
 async function findUserByEmail(db: SupabaseClient, email: string): Promise<User | null> {
   for (let page = 1; page <= 10; page += 1) {
     const result = await db.auth.admin.listUsers({ page, perPage: 100 });
