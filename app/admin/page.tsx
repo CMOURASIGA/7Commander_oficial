@@ -12,8 +12,12 @@ const MODULES = [
 
 type LicensedCompany = {
   id: string; name: string; legal_name?: string; tax_id?: string; status: string; plan: string;
-  contract_start?: string; contract_end?: string; licensed_users: number;
-  organization_members?: Array<{ id: string }>;
+  email?: string; phone?: string; contract_start?: string; contract_end?: string;
+  billing_day?: number; licensed_users: number;
+  address?: { street?: string; number?: string; city?: string; state?: string; zipCode?: string };
+  contract_contact?: { name?: string; email?: string; phone?: string };
+  organization_members?: Array<{ id: string; user_id?: string; role?: string; status?: string }>;
+  organization_modules?: Array<{ module_key: string; enabled: boolean }>;
   branding?: { displayName?: string; logoUrl?: string; primaryColor?: string; secondaryColor?: string };
 };
 
@@ -29,6 +33,7 @@ export default function PlatformAdminPage() {
   const [logoFileName, setLogoFileName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#003B73");
   const [secondaryColor, setSecondaryColor] = useState("#00AEEF");
+  const selectedCompany = companies.find((company) => company.id === selected);
 
   async function load() {
     setLoading(true); setError("");
@@ -197,6 +202,25 @@ export default function PlatformAdminPage() {
             </div><button className="mt-5 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Cadastrar usuário</button></form>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Empresas licenciadas</h2>{loading ? <p className="mt-3 text-sm">Carregando...</p> : companies.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhuma empresa cadastrada.</p> : <div className="mt-4 space-y-3">{companies.map((company) => <button type="button" onClick={() => setSelected(company.id)} key={company.id} className={`w-full rounded-xl border p-4 text-left ${selected === company.id ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><div className="flex justify-between gap-3"><strong>{company.name}</strong><span className="text-xs font-semibold uppercase text-emerald-700">{company.status}</span></div><p className="mt-1 text-xs text-slate-500">CNPJ: {company.tax_id || "-"}</p><p className="mt-1 text-xs text-slate-500">{company.plan} · {company.organization_members?.length || 0}/{company.licensed_users} usuários</p><p className="mt-1 text-xs text-slate-500">Contrato: {company.contract_start || "-"} a {company.contract_end || "-"}</p></button>)}</div>}</section>
+
+            {selectedCompany ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Cadastro selecionado</p><h2 className="mt-1 text-xl font-semibold">{selectedCompany.name}</h2></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase text-emerald-700">{selectedCompany.status}</span></div>
+              <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+                <Detail label="Razão social" value={selectedCompany.legal_name} />
+                <Detail label="CNPJ" value={selectedCompany.tax_id} />
+                <Detail label="Plano" value={selectedCompany.plan} />
+                <Detail label="Usuários" value={`${selectedCompany.organization_members?.length || 0}/${selectedCompany.licensed_users}`} />
+                <Detail label="E-mail" value={selectedCompany.email} />
+                <Detail label="Telefone" value={selectedCompany.phone} />
+                <Detail label="Contrato" value={`${selectedCompany.contract_start || "-"} a ${selectedCompany.contract_end || "-"}`} />
+                <Detail label="Vencimento" value={selectedCompany.billing_day ? `Dia ${selectedCompany.billing_day}` : "-"} />
+                <Detail label="Responsável" value={selectedCompany.contract_contact?.name} />
+                <Detail label="Contato" value={selectedCompany.contract_contact?.email || selectedCompany.contract_contact?.phone} />
+                <Detail label="Endereço" value={[selectedCompany.address?.street, selectedCompany.address?.number, selectedCompany.address?.city, selectedCompany.address?.state].filter(Boolean).join(", ")} />
+              </div>
+              <div className="mt-5 rounded-2xl border border-slate-200 p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">White label</p><div className="mt-3 flex items-center gap-4">{selectedCompany.branding?.logoUrl ? <img src={selectedCompany.branding.logoUrl} alt={`Logo ${selectedCompany.name}`} className="h-16 w-20 rounded-lg border border-slate-200 object-contain p-1" /> : <div className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-slate-400">Sem logo</div>}<div><strong>{selectedCompany.branding?.displayName || selectedCompany.name}</strong><div className="mt-2 flex gap-2"><ColorSample label="Principal" color={selectedCompany.branding?.primaryColor} /><ColorSample label="Destaque" color={selectedCompany.branding?.secondaryColor} /></div></div></div></div>
+              <div className="mt-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Módulos liberados</p><div className="mt-2 flex flex-wrap gap-2">{selectedCompany.organization_modules?.filter((module) => module.enabled).map((module) => <span key={module.module_key} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{MODULES.find(([key]) => key === module.module_key)?.[1] || module.module_key}</span>)}</div></div>
+            </section> : null}
           </div>
         </div>
       </div>
@@ -206,4 +230,12 @@ export default function PlatformAdminPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block text-sm font-medium text-slate-700">{label}{children}</label>;
+}
+
+function Detail({ label, value }: { label: string; value?: string | number }) {
+  return <div><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 text-slate-800">{value || "-"}</p></div>;
+}
+
+function ColorSample({ label, color }: { label: string; color?: string }) {
+  return <span className="flex items-center gap-1 text-xs text-slate-500"><i className="h-4 w-4 rounded-full border border-slate-200" style={{ backgroundColor: color || "#ffffff" }} />{label}: {color || "-"}</span>;
 }

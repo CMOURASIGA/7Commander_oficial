@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_SUBTITLE } from "@/lib/brand";
-import { DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
+import { applyClientBrandSettings, DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
 import { getClientAuthHeaders } from "@/lib/client-auth";
 
 const NAV_ITEMS = [
@@ -36,8 +36,7 @@ export function Sidebar() {
       const next = { clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor };
       window.localStorage.setItem("7commander-client-brand", JSON.stringify(next));
       setClientBrand(next);
-      document.documentElement.style.setProperty("--accent", next.primaryColor);
-      document.documentElement.style.setProperty("--brand-highlight", next.highlightColor);
+      applyClientBrandSettings(next);
     }).catch(() => undefined);
     window.addEventListener("client-brand-updated", refreshBrand);
     return () => window.removeEventListener("client-brand-updated", refreshBrand);
