@@ -20,6 +20,7 @@ type LicensedCompany = {
   organization_members?: Array<{ id: string; user_id?: string; role?: string; status?: string }>;
   organization_modules?: Array<{ module_key: string; enabled: boolean }>;
   branding?: { displayName?: string; logoUrl?: string; primaryColor?: string; secondaryColor?: string; sidebarColor?: string; softColor?: string; contrastColor?: string };
+  quotas?: { lifecycle?: { inactiveAt?: string; retentionUntil?: string; inactiveReason?: string; inactiveBy?: string; reactivatedAt?: string; reactivatedBy?: string } };
 };
 
 export default function PlatformAdminPage() {
@@ -36,6 +37,11 @@ export default function PlatformAdminPage() {
   const [primaryColor, setPrimaryColor] = useState("#003B73");
   const [secondaryColor, setSecondaryColor] = useState("#00AEEF");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [editBrandName, setEditBrandName] = useState("");
+  const [editPrimaryColor, setEditPrimaryColor] = useState("#003B73");
+  const [editSecondaryColor, setEditSecondaryColor] = useState("#00AEEF");
   const selectedCompany = companies.find((company) => company.id === selected);
   const palette = useMemo(() => deriveBrandPalette(primaryColor, secondaryColor), [primaryColor, secondaryColor]);
 
@@ -107,6 +113,23 @@ export default function PlatformAdminPage() {
     setLogoFileName("");
   }
 
+  function openEditor(company: LicensedCompany) {
+    setEditLogoUrl(company.branding?.logoUrl || "");
+    setEditBrandName(company.branding?.displayName || company.name);
+    setEditPrimaryColor(company.branding?.primaryColor || "#003B73");
+    setEditSecondaryColor(company.branding?.secondaryColor || "#00AEEF");
+    setEditOpen(true);
+  }
+
+  function selectEditLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 2 * 1024 * 1024) { setError("Selecione uma imagem de até 2 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => setEditLogoUrl(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
   async function createCompany(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setMessage("");
     const form = event.currentTarget; const data = new FormData(form);
@@ -136,6 +159,29 @@ export default function PlatformAdminPage() {
     else { setMessage(result.existingUser ? "Usuário existente vinculado à empresa com sucesso." : "Usuário criado. O e-mail de confirmação foi enviado."); form.reset(); await load(); }
   }
 
+  async function updateCompany(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedCompany) return;
+    setError(""); setMessage("");
+    const data = new FormData(event.currentTarget);
+    const status = String(data.get("status"));
+    const inactiveReason = String(data.get("inactiveReason") ?? "").trim();
+    if (status === "suspended" && selectedCompany.status !== "suspended" && !inactiveReason) { setError("Informe o motivo da inativação."); return; }
+    if (status === "suspended" && selectedCompany.status !== "suspended" && !window.confirm("Confirmar a inativação? Os usuários perderão o acesso, mas todos os dados serão preservados por cinco anos.")) return;
+    const modules = MODULES.filter(([key]) => data.get(`edit-module-${key}`) === "on").map(([key]) => key);
+    const editPalette = deriveBrandPalette(editPrimaryColor, editSecondaryColor);
+    const payload = {
+      name: data.get("name"), legalName: data.get("legalName"), taxId: data.get("taxId"), email: data.get("email"), phone: data.get("phone"), plan: data.get("plan"), status,
+      contractStart: data.get("contractStart"), contractEnd: data.get("contractEnd"), billingDay: data.get("billingDay"), licensedUsers: data.get("licensedUsers"), inactiveReason,
+      address: { street: data.get("street"), number: data.get("number"), city: data.get("city"), state: data.get("state"), zipCode: data.get("zipCode") },
+      contractContact: { name: data.get("contactName"), email: data.get("contactEmail"), phone: data.get("contactPhone") }, branding: { displayName: editBrandName || data.get("name"), logoUrl: editLogoUrl, primaryColor: editPrimaryColor, secondaryColor: editSecondaryColor, sidebarColor: editPalette.sidebarColor, softColor: editPalette.softColor, contrastColor: editPalette.contrastColor }, modules,
+    };
+    const response = await fetch(`/api/platform/clients/${selectedCompany.id}`, { method: "PATCH", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) });
+    const result = await response.json();
+    if (!response.ok) setError(result.error || "Não foi possível atualizar a empresa.");
+    else { setMessage(status === "suspended" ? "Empresa inativada. O acesso foi bloqueado e a retenção iniciada." : "Empresa licenciada atualizada com sucesso."); setEditOpen(false); await load(); }
+  }
+
   async function signOut() { await auth.signOut(); router.replace("/login"); }
 
   return (
@@ -153,6 +199,7 @@ export default function PlatformAdminPage() {
         </nav>
         {error ? <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
         {message ? <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{message}</div> : null}
+        <RetentionAlerts companies={companies} onSelect={(id) => setSelected(id)} />
 
         <div className="grid gap-6 xl:grid-cols-[1.25fr_.75fr]">
           <form onSubmit={createCompany} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -212,7 +259,7 @@ export default function PlatformAdminPage() {
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Empresas licenciadas</h2>{loading ? <p className="mt-3 text-sm">Carregando...</p> : companies.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhuma empresa cadastrada.</p> : <div className="mt-4 space-y-3">{companies.map((company) => <button type="button" onClick={() => setSelected(company.id)} key={company.id} className={`w-full rounded-xl border p-4 text-left ${selected === company.id ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><div className="flex justify-between gap-3"><strong>{company.name}</strong><span className="text-xs font-semibold uppercase text-emerald-700">{company.status}</span></div><p className="mt-1 text-xs text-slate-500">CNPJ: {company.tax_id || "-"}</p><p className="mt-1 text-xs text-slate-500">{company.plan} · {company.organization_members?.length || 0}/{company.licensed_users} usuários</p><p className="mt-1 text-xs text-slate-500">Contrato: {company.contract_start || "-"} a {company.contract_end || "-"}</p></button>)}</div>}</section>
 
             {selectedCompany ? <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Cadastro selecionado</p><h2 className="mt-1 text-xl font-semibold">{selectedCompany.name}</h2></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase text-emerald-700">{selectedCompany.status}</span></div>
+              <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Cadastro selecionado</p><h2 className="mt-1 text-xl font-semibold">{selectedCompany.name}</h2></div><div className="flex items-center gap-2"><span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${selectedCompany.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{selectedCompany.status === "suspended" ? "Inativa" : selectedCompany.status}</span><button type="button" onClick={() => openEditor(selectedCompany)} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white">Editar</button></div></div>
               <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
                 <Detail label="Razão social" value={selectedCompany.legal_name} />
                 <Detail label="CNPJ" value={selectedCompany.tax_id} />
@@ -228,11 +275,13 @@ export default function PlatformAdminPage() {
               </div>
               <div className="mt-5 rounded-2xl border border-slate-200 p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">White label</p><div className="mt-3 flex items-center gap-4">{selectedCompany.branding?.logoUrl ? <img src={selectedCompany.branding.logoUrl} alt={`Logo ${selectedCompany.name}`} className="h-16 w-20 rounded-lg border border-slate-200 object-contain p-1" /> : <div className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-slate-400">Sem logo</div>}<div><strong>{selectedCompany.branding?.displayName || selectedCompany.name}</strong><div className="mt-2 flex gap-2"><ColorSample label="Principal" color={selectedCompany.branding?.primaryColor} /><ColorSample label="Destaque" color={selectedCompany.branding?.secondaryColor} /></div></div></div></div>
               <div className="mt-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Módulos liberados</p><div className="mt-2 flex flex-wrap gap-2">{selectedCompany.organization_modules?.filter((module) => module.enabled).map((module) => <span key={module.module_key} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{MODULES.find(([key]) => key === module.module_key)?.[1] || module.module_key}</span>)}</div></div>
+              {selectedCompany.status === "suspended" ? <RetentionNotice company={selectedCompany} /> : null}
             </section> : null}
           </div>
         </div>
       </div>
       {previewOpen ? <BrandPreviewModal logoUrl={logoUrl} companyName={brandDisplayName || "Sua empresa"} palette={palette} onClose={() => setPreviewOpen(false)} /> : null}
+      {editOpen && selectedCompany ? <EditCompanyModal company={selectedCompany} onClose={() => setEditOpen(false)} onSubmit={updateCompany} logoUrl={editLogoUrl} brandName={editBrandName} primaryColor={editPrimaryColor} secondaryColor={editSecondaryColor} onLogoChange={selectEditLogo} onBrandNameChange={setEditBrandName} onPrimaryChange={setEditPrimaryColor} onSecondaryChange={setEditSecondaryColor} /> : null}
     </main>
   );
 }
@@ -247,6 +296,31 @@ function Detail({ label, value }: { label: string; value?: string | number }) {
 
 function ColorSample({ label, color }: { label: string; color?: string }) {
   return <span className="flex items-center gap-1 text-xs text-slate-500"><i className="h-4 w-4 rounded-full border border-slate-200" style={{ backgroundColor: color || "#ffffff" }} />{label}: {color || "-"}</span>;
+}
+
+function retentionState(retentionUntil?: string) {
+  if (!retentionUntil) return null;
+  const days = Math.ceil((new Date(retentionUntil).getTime() - Date.now()) / 86400000);
+  return { days, urgent: days <= 90, expired: days <= 0 };
+}
+
+function RetentionAlerts({ companies, onSelect }: { companies: LicensedCompany[]; onSelect: (id: string) => void }) {
+  const alerts = companies.filter((company) => company.status === "suspended" && retentionState(company.quotas?.lifecycle?.retentionUntil)?.urgent);
+  if (!alerts.length) return null;
+  return <section className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4"><p className="font-semibold text-amber-900">Retenções próximas do prazo</p><div className="mt-2 flex flex-wrap gap-2">{alerts.map((company) => <button type="button" key={company.id} onClick={() => onSelect(company.id)} className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-amber-900 shadow-sm">{company.name}: {formatDate(company.quotas?.lifecycle?.retentionUntil)}</button>)}</div></section>;
+}
+
+function RetentionNotice({ company }: { company: LicensedCompany }) {
+  const lifecycle = company.quotas?.lifecycle;
+  const state = retentionState(lifecycle?.retentionUntil);
+  return <div className={`mt-5 rounded-2xl border p-4 ${state?.urgent ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-slate-50"}`}><p className="text-xs font-bold uppercase tracking-wider text-slate-600">Retenção dos dados</p><p className="mt-2 text-sm text-slate-700">Inativada em: {formatDate(lifecycle?.inactiveAt)}. Motivo: {lifecycle?.inactiveReason || "-"}</p><p className="mt-1 text-sm font-semibold text-slate-800">Retenção prevista até {formatDate(lifecycle?.retentionUntil)}.</p>{state?.expired ? <p className="mt-2 text-sm font-bold text-red-700">Período concluído. Decisão administrativa necessária. Nenhum dado será apagado automaticamente.</p> : state?.urgent ? <p className="mt-2 text-sm font-bold text-amber-800">O período termina em aproximadamente {Math.max(0, state.days)} dias. Defina a destinação dos dados.</p> : null}</div>;
+}
+
+function formatDate(value?: string) { return value ? new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value)) : "-"; }
+
+function EditCompanyModal({ company, onClose, onSubmit, logoUrl, brandName, primaryColor, secondaryColor, onLogoChange, onBrandNameChange, onPrimaryChange, onSecondaryChange }: { company: LicensedCompany; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; logoUrl: string; brandName: string; primaryColor: string; secondaryColor: string; onLogoChange: (event: ChangeEvent<HTMLInputElement>) => void; onBrandNameChange: (value: string) => void; onPrimaryChange: (value: string) => void; onSecondaryChange: (value: string) => void }) {
+  const enabled = new Set(company.organization_modules?.filter((item) => item.enabled).map((item) => item.module_key));
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true"><button type="button" aria-label="Fechar" onClick={onClose} className="absolute inset-0" /><form onSubmit={onSubmit} className="relative z-10 max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-700">Empresa licenciada</p><h2 className="mt-1 text-xl font-semibold">Editar {company.name}</h2></div><button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">Fechar</button></div><div className="mt-6 grid gap-4 md:grid-cols-2"><Field label="Nome fantasia"><input name="name" required defaultValue={company.name} className="workspace-input mt-1" /></Field><Field label="Razão social"><input name="legalName" required defaultValue={company.legal_name} className="workspace-input mt-1" /></Field><Field label="CNPJ"><input name="taxId" required defaultValue={company.tax_id} className="workspace-input mt-1" /></Field><Field label="Plano"><select name="plan" defaultValue={company.plan} className="workspace-input mt-1"><option value="professional">Profissional</option><option value="business">Business</option><option value="enterprise">Enterprise</option></select></Field><Field label="E-mail"><input name="email" type="email" defaultValue={company.email} className="workspace-input mt-1" /></Field><Field label="Telefone"><input name="phone" defaultValue={company.phone} className="workspace-input mt-1" /></Field><Field label="Início do contrato"><input name="contractStart" type="date" defaultValue={company.contract_start} className="workspace-input mt-1" /></Field><Field label="Fim do contrato"><input name="contractEnd" type="date" defaultValue={company.contract_end} className="workspace-input mt-1" /></Field><Field label="Dia de vencimento"><input name="billingDay" type="number" min="1" max="31" defaultValue={company.billing_day} className="workspace-input mt-1" /></Field><Field label="Usuários contratados"><input name="licensedUsers" type="number" min="1" defaultValue={company.licensed_users} className="workspace-input mt-1" /></Field><Field label="Situação"><select name="status" defaultValue={company.status} className="workspace-input mt-1"><option value="active">Ativa</option><option value="pending">Pendente</option><option value="suspended">Inativa</option></select></Field><Field label="Motivo da inativação"><input name="inactiveReason" defaultValue={company.quotas?.lifecycle?.inactiveReason} placeholder="Ex.: mensalidade em atraso" className="workspace-input mt-1" /></Field><Field label="Responsável pelo contrato"><input name="contactName" defaultValue={company.contract_contact?.name} className="workspace-input mt-1" /></Field><Field label="E-mail do responsável"><input name="contactEmail" type="email" defaultValue={company.contract_contact?.email} className="workspace-input mt-1" /></Field><Field label="Telefone do responsável"><input name="contactPhone" defaultValue={company.contract_contact?.phone} className="workspace-input mt-1" /></Field><Field label="CEP"><input name="zipCode" defaultValue={company.address?.zipCode} className="workspace-input mt-1" /></Field><Field label="Logradouro"><input name="street" defaultValue={company.address?.street} className="workspace-input mt-1" /></Field><Field label="Número"><input name="number" defaultValue={company.address?.number} className="workspace-input mt-1" /></Field><Field label="Cidade"><input name="city" defaultValue={company.address?.city} className="workspace-input mt-1" /></Field><Field label="Estado"><input name="state" maxLength={2} defaultValue={company.address?.state} className="workspace-input mt-1" /></Field></div><h3 className="mt-6 font-semibold">White label</h3><div className="mt-3 grid gap-4 md:grid-cols-[140px_1fr]"><div className="flex h-28 items-center justify-center rounded-xl border bg-white p-3">{logoUrl ? <img src={logoUrl} alt="Logo da empresa" className="max-h-full max-w-full object-contain" /> : <span className="text-xs text-slate-400">Sem logo</span>}</div><div className="grid gap-3 sm:grid-cols-2"><Field label="Nome exibido"><input value={brandName} onChange={(event) => onBrandNameChange(event.target.value)} className="workspace-input mt-1" /></Field><Field label="Substituir logo"><input type="file" accept="image/*" onChange={onLogoChange} className="mt-2 block w-full text-xs" /></Field><Field label="Cor principal"><input type="color" value={primaryColor} onChange={(event) => onPrimaryChange(event.target.value)} className="mt-1 h-11 w-full rounded-lg border p-1" /></Field><Field label="Cor de destaque"><input type="color" value={secondaryColor} onChange={(event) => onSecondaryChange(event.target.value)} className="mt-1 h-11 w-full rounded-lg border p-1" /></Field></div></div><h3 className="mt-6 font-semibold">Módulos liberados</h3><div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-4">{MODULES.map(([key, label]) => <label key={key} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" name={`edit-module-${key}`} defaultChecked={enabled.has(key)} />{label}</label>)}</div><div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Inativar bloqueia o acesso, mas preserva todos os dados. A retenção de cinco anos começa na data da inativação. Não há exclusão automática.</div><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">Cancelar</button><button className="rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Salvar alterações</button></div></form></div>;
 }
 
 type PreviewPalette = ReturnType<typeof deriveBrandPalette>;

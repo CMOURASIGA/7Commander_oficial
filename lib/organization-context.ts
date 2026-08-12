@@ -8,6 +8,14 @@ export type OrganizationContext = {
   role: OrganizationRole;
 };
 
+type OrganizationRecord = { name?: string; status?: string; contract_start?: string | null; contract_end?: string | null };
+
+function isLicenseAllowed(organization?: OrganizationRecord | null) {
+  if (!organization || organization.status !== "active") return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return (!organization.contract_start || organization.contract_start <= today) && (!organization.contract_end || organization.contract_end >= today);
+}
+
 export async function resolveOrganizationContext(
   supabase: SupabaseClient,
   userId: string,
@@ -15,7 +23,7 @@ export async function resolveOrganizationContext(
 ): Promise<OrganizationContext | null> {
   const membership = await supabase
     .from("organization_members")
-    .select("organization_id, role, organizations(name)")
+    .select("organization_id, role, organizations(name,status,contract_start,contract_end)")
     .eq("user_id", userId)
     .eq("status", "active")
     .order("created_at", { ascending: true })
@@ -26,6 +34,7 @@ export async function resolveOrganizationContext(
     const organization = Array.isArray(membership.data.organizations)
       ? membership.data.organizations[0]
       : membership.data.organizations;
+    if (!isLicenseAllowed(organization as OrganizationRecord)) return null;
     return {
       organizationId: membership.data.organization_id,
       organizationName: organization?.name ?? "Empresa",
@@ -42,7 +51,7 @@ export async function resolveOrganizationContext(
   const pendingInvite = normalizedEmail
     ? await supabase
         .from("organization_invites")
-        .select("id, organization_id, role, organizations(name)")
+        .select("id, organization_id, role, organizations(name,status,contract_start,contract_end)")
         .eq("email", normalizedEmail)
         .eq("status", "pending")
         .gt("expires_at", new Date().toISOString())
@@ -52,6 +61,8 @@ export async function resolveOrganizationContext(
     : { data: null, error: null };
 
   if (pendingInvite.data) {
+    const invitedOrganization = Array.isArray(pendingInvite.data.organizations) ? pendingInvite.data.organizations[0] : pendingInvite.data.organizations;
+    if (!isLicenseAllowed(invitedOrganization as OrganizationRecord)) return null;
     const accepted = await supabase.from("organization_members").insert({
       organization_id: pendingInvite.data.organization_id,
       user_id: userId,
@@ -60,9 +71,7 @@ export async function resolveOrganizationContext(
     });
     if (accepted.error) throw accepted.error;
     await supabase.from("organization_invites").update({ status: "accepted" }).eq("id", pendingInvite.data.id);
-    const organization = Array.isArray(pendingInvite.data.organizations)
-      ? pendingInvite.data.organizations[0]
-      : pendingInvite.data.organizations;
+    const organization = invitedOrganization;
     return {
       organizationId: pendingInvite.data.organization_id,
       organizationName: organization?.name ?? "Empresa",

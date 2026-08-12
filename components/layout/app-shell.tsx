@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { useKairosAuth } from "@/components/auth/kairos-auth-provider";
+import { getClientAuthHeaders } from "@/lib/client-auth";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export function AppShell({ children }: AppShellProps) {
   const auth = useKairosAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [licenseBlocked, setLicenseBlocked] = useState(false);
   const canBypassAuth = pathname === "/login" || pathname.startsWith("/auth/callback") || pathname.startsWith("/account/");
   const isPlatformAdmin = pathname.startsWith("/admin");
   const mustWaitForAuth = auth.required && auth.loading && !canBypassAuth;
@@ -23,6 +25,11 @@ export function AppShell({ children }: AppShellProps) {
     if (!mustBlock) return;
     router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [mustBlock, pathname, router]);
+
+  useEffect(() => {
+    if (auth.loading || !auth.user || canBypassAuth || isPlatformAdmin) { setLicenseBlocked(false); return; }
+    void fetch("/api/organization/context", { headers: getClientAuthHeaders() }).then((response) => setLicenseBlocked(response.status === 403)).catch(() => undefined);
+  }, [auth.loading, auth.user, canBypassAuth, isPlatformAdmin, pathname]);
 
   if (canBypassAuth) {
     return (
@@ -71,6 +78,8 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   if (isPlatformAdmin) return <>{children}</>;
+
+  if (licenseBlocked) return <div className="min-h-screen bg-(--bg-page)"><main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-4"><section className="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-amber-700">Acesso indisponível</p><h1 className="mt-3 text-2xl font-semibold">Licença da empresa inativa ou fora da vigência</h1><p className="mt-3 text-sm leading-6 text-slate-600">Os dados permanecem preservados. Entre em contato com a administração da Consult Services para regularizar ou reativar o acesso.</p><button type="button" onClick={() => void auth.signOut().then(() => router.replace("/login"))} className="mt-6 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Voltar ao login</button></section></main></div>;
 
   return (
     <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">
