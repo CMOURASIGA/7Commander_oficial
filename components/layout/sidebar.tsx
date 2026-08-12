@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_SUBTITLE } from "@/lib/brand";
-import { applyClientBrandSettings, DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
+import { applyClientBrandSettings, completeClientBrand, DEFAULT_CLIENT_BRAND, getClientBrandSettings, ClientBrandSettings } from "@/lib/brand-settings";
 import { getClientAuthHeaders } from "@/lib/client-auth";
 
 const NAV_ITEMS = [
@@ -33,7 +33,7 @@ export function Sidebar() {
       if (!response.ok) return;
       const result = await response.json();
       const branding = result.organization?.branding ?? {};
-      const next = { clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor };
+      const next = completeClientBrand({ clientName: branding.displayName || result.organization?.name || DEFAULT_CLIENT_BRAND.clientName, logoUrl: branding.logoUrl || DEFAULT_CLIENT_BRAND.logoUrl, primaryColor: branding.primaryColor || DEFAULT_CLIENT_BRAND.primaryColor, highlightColor: branding.secondaryColor || DEFAULT_CLIENT_BRAND.highlightColor, sidebarColor: branding.sidebarColor, softColor: branding.softColor, contrastColor: branding.contrastColor });
       window.localStorage.setItem("7commander-client-brand", JSON.stringify(next));
       setClientBrand(next);
       applyClientBrandSettings(next);

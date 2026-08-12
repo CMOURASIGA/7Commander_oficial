@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { User } from "@supabase/supabase-js";
 import { getClientAuthHeaders, clearClientAuthToken, setClientAuthToken } from "@/lib/client-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { resetClientBrandSettings } from "@/lib/brand-settings";
 
 type KairosAuthState = {
   loading: boolean;
@@ -126,9 +127,9 @@ export function KairosAuthProvider({ required, children }: ProviderProps) {
       },
       signOut: async () => {
         const client = getSupabaseBrowserClient();
-        if (!client) return;
-        await client.auth.signOut();
+        if (client) await client.auth.signOut();
         clearClientAuthToken();
+        resetClientBrandSettings();
         setUser(null);
       },
     };

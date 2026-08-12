@@ -1,9 +1,10 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useKairosAuth } from "@/components/auth/kairos-auth-provider";
 import { getClientAuthHeaders } from "@/lib/client-auth";
+import { deriveBrandPalette } from "@/lib/brand-settings";
 
 const MODULES = [
   ["projects", "Projetos"], ["daily", "Daily"], ["kairos", "Kairos"], ["voice", "Voice Room"],
@@ -18,7 +19,7 @@ type LicensedCompany = {
   contract_contact?: { name?: string; email?: string; phone?: string };
   organization_members?: Array<{ id: string; user_id?: string; role?: string; status?: string }>;
   organization_modules?: Array<{ module_key: string; enabled: boolean }>;
-  branding?: { displayName?: string; logoUrl?: string; primaryColor?: string; secondaryColor?: string };
+  branding?: { displayName?: string; logoUrl?: string; primaryColor?: string; secondaryColor?: string; sidebarColor?: string; softColor?: string; contrastColor?: string };
 };
 
 export default function PlatformAdminPage() {
@@ -31,9 +32,12 @@ export default function PlatformAdminPage() {
   const [loading, setLoading] = useState(true);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoFileName, setLogoFileName] = useState("");
+  const [brandDisplayName, setBrandDisplayName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#003B73");
   const [secondaryColor, setSecondaryColor] = useState("#00AEEF");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const selectedCompany = companies.find((company) => company.id === selected);
+  const palette = useMemo(() => deriveBrandPalette(primaryColor, secondaryColor), [primaryColor, secondaryColor]);
 
   async function load() {
     setLoading(true); setError("");
@@ -87,8 +91,11 @@ export default function PlatformAdminPage() {
         const palette = [...colors.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key.split(",").map(Number));
         const toHex = (color: number[]) => `#${color.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
         const saturated = palette.filter(([red, green, blue]) => Math.max(red, green, blue) - Math.min(red, green, blue) > 70);
-        if (saturated[0]) setPrimaryColor(toHex(saturated[0]));
-        if (saturated[1]) setSecondaryColor(toHex(saturated[1]));
+        if (saturated[0]) {
+          const dominant = toHex(saturated[0]);
+          setPrimaryColor(dominant);
+          setSecondaryColor(saturated[1] ? toHex(saturated[1]) : dominant);
+        }
       };
       image.src = nextLogoUrl;
     };
@@ -111,13 +118,13 @@ export default function PlatformAdminPage() {
       billingDay: data.get("billingDay"), licensedUsers: data.get("licensedUsers"),
       address: { street: data.get("street"), number: data.get("number"), city: data.get("city"), state: data.get("state"), zipCode: data.get("zipCode") },
       contractContact: { name: data.get("contactName"), email: data.get("contactEmail"), phone: data.get("contactPhone") },
-      branding: { displayName: data.get("brandName") || data.get("name"), logoUrl, primaryColor, secondaryColor },
+      branding: { displayName: brandDisplayName || data.get("name"), logoUrl, primaryColor, secondaryColor, sidebarColor: palette.sidebarColor, softColor: palette.softColor, contrastColor: palette.contrastColor },
       modules,
     };
     const response = await fetch("/api/platform/clients", { method: "POST", headers: getClientAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) });
     const result = await response.json();
     if (!response.ok) setError(result.error || "Não foi possível cadastrar a empresa.");
-    else { setMessage("Empresa licenciada cadastrada com sucesso."); form.reset(); removeLogo(); setPrimaryColor("#003B73"); setSecondaryColor("#00AEEF"); await load(); }
+    else { setMessage("Empresa licenciada cadastrada com sucesso."); form.reset(); removeLogo(); setBrandDisplayName(""); setPrimaryColor("#003B73"); setSecondaryColor("#00AEEF"); await load(); }
   }
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
@@ -176,7 +183,7 @@ export default function PlatformAdminPage() {
                 {logoUrl ? <img src={logoUrl} alt="Prévia da logo da empresa" className="max-h-24 max-w-full rounded-lg object-contain" /> : <span className="text-center text-xs text-slate-400">Prévia da logo</span>}{/* eslint-disable-line @next/next/no-img-element */}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Nome exibido"><input name="brandName" className="workspace-input mt-1" /></Field>
+                <Field label="Nome exibido"><input name="brandName" value={brandDisplayName} onChange={(event) => setBrandDisplayName(event.target.value)} className="workspace-input mt-1" /></Field>
                 <Field label="Logo da empresa">
                   <span className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="cursor-pointer rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Escolher arquivo</span>
@@ -189,6 +196,7 @@ export default function PlatformAdminPage() {
                 {logoUrl ? <button type="button" onClick={removeLogo} className="w-fit text-sm font-semibold text-red-600">Remover logo</button> : null}
               </div>
             </div>
+            <BrandPreview logoUrl={logoUrl} companyName={brandDisplayName || "Sua empresa"} palette={palette} onExpand={() => setPreviewOpen(true)} />
             <h3 className="mt-7 font-semibold">Módulos liberados</h3><div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">{MODULES.map(([key, label]) => <label key={key} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" name={`module-${key}`} defaultChecked />{label}</label>)}</div>
             <button className="mt-6 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white">Salvar empresa licenciada</button>
           </form>
@@ -224,6 +232,7 @@ export default function PlatformAdminPage() {
           </div>
         </div>
       </div>
+      {previewOpen ? <BrandPreviewModal logoUrl={logoUrl} companyName={brandDisplayName || "Sua empresa"} palette={palette} onClose={() => setPreviewOpen(false)} /> : null}
     </main>
   );
 }
@@ -238,4 +247,18 @@ function Detail({ label, value }: { label: string; value?: string | number }) {
 
 function ColorSample({ label, color }: { label: string; color?: string }) {
   return <span className="flex items-center gap-1 text-xs text-slate-500"><i className="h-4 w-4 rounded-full border border-slate-200" style={{ backgroundColor: color || "#ffffff" }} />{label}: {color || "-"}</span>;
+}
+
+type PreviewPalette = ReturnType<typeof deriveBrandPalette>;
+
+function BrandPreview({ logoUrl, companyName, palette, onExpand }: { logoUrl: string; companyName: string; palette: PreviewPalette; onExpand: () => void }) {
+  return <div className="mt-6"><div className="mb-2 flex items-center justify-between"><div><h4 className="font-semibold">Prévia do sistema</h4><p className="text-xs text-slate-500">Clique para ampliar e validar a identidade antes de salvar.</p></div><button type="button" onClick={onExpand} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">Ampliar</button></div><button type="button" onClick={onExpand} className="block w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-left shadow-sm"><WorkspacePreview logoUrl={logoUrl} companyName={companyName} palette={palette} compact /></button></div>;
+}
+
+function BrandPreviewModal({ logoUrl, companyName, palette, onClose }: { logoUrl: string; companyName: string; palette: PreviewPalette; onClose: () => void }) {
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-label="Prévia ampliada do white label"><button type="button" aria-label="Fechar prévia" onClick={onClose} className="absolute inset-0" /><div className="relative z-10 w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><strong>Prévia ampliada do white label</strong><p className="text-xs text-slate-500">Representação da tela principal com a paleta gerada automaticamente.</p></div><button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Fechar</button></div><WorkspacePreview logoUrl={logoUrl} companyName={companyName} palette={palette} /></div></div>;
+}
+
+function WorkspacePreview({ logoUrl, companyName, palette, compact = false }: { logoUrl: string; companyName: string; palette: PreviewPalette; compact?: boolean }) {
+  return <div className={`flex bg-slate-100 ${compact ? "h-64" : "h-[68vh] min-h-[480px]"}`}><aside className={`${compact ? "w-28" : "w-56"} flex-shrink-0 text-white`} style={{ backgroundColor: palette.sidebarColor }}><div className={`${compact ? "h-16 p-2" : "h-28 p-4"} flex items-center justify-center rounded-br-2xl bg-white`}>{logoUrl ? <img src={logoUrl} alt="Logo na prévia" className="max-h-full max-w-full object-contain" /> : <span className="text-xs text-slate-400">Sua logo</span>}</div><div className={compact ? "p-2" : "p-4"}><p className={`${compact ? "text-[7px]" : "text-[10px]"} font-black uppercase tracking-widest`} style={{ color: palette.highlightColor }}>7Commander</p><p className={`${compact ? "mt-1 text-[7px]" : "mt-2 text-xs"} font-semibold`}>{companyName}</p><div className={compact ? "mt-3 space-y-1" : "mt-7 space-y-2"}>{["Início", "Projetos", "Atividades", "Kairos"].map((item, index) => <div key={item} className={`${compact ? "rounded px-2 py-1 text-[7px]" : "rounded-lg px-3 py-2 text-xs"} font-semibold`} style={index === 0 ? { backgroundColor: palette.highlightColor, color: palette.contrastColor } : undefined}>{item}</div>)}</div></div></aside><div className="min-w-0 flex-1"><header className={`${compact ? "h-9 px-3" : "h-14 px-6"} flex items-center border-b border-slate-200 bg-white`}><span className={`${compact ? "text-[7px]" : "text-xs"} font-bold uppercase tracking-wider`} style={{ color: palette.primaryColor }}>Workspace ativo</span></header><main className={compact ? "p-3" : "p-6"}><section className={`${compact ? "p-3" : "p-6"} rounded-xl border border-slate-200 bg-white`}><h3 className={`${compact ? "text-xs" : "text-xl"} font-semibold text-slate-800`}>Bom dia, Christian</h3><p className={`${compact ? "mt-1 text-[7px]" : "mt-2 text-sm"} text-slate-500`}>Acompanhe seus projetos e atividades.</p><button type="button" tabIndex={-1} className={`${compact ? "mt-2 rounded px-2 py-1 text-[7px]" : "mt-4 rounded-lg px-4 py-2 text-sm"} font-semibold`} style={{ backgroundColor: palette.primaryColor, color: palette.contrastColor }}>Criar projeto</button></section><section className={`${compact ? "mt-2 p-2" : "mt-4 p-4"} rounded-xl border`} style={{ backgroundColor: palette.softColor, borderColor: palette.primaryColor }}><p className={`${compact ? "text-[7px]" : "text-sm"} font-semibold`} style={{ color: palette.sidebarColor }}>Kairos disponível</p></section><div className={`${compact ? "mt-2 gap-2" : "mt-4 gap-4"} grid grid-cols-3`}>{["Projetos", "Ativos", "Em risco"].map((item) => <div key={item} className={`${compact ? "p-2" : "p-4"} rounded-xl border border-slate-200 bg-white`}><span className={`${compact ? "text-[6px]" : "text-xs"} uppercase text-slate-500`}>{item}</span><div className={`${compact ? "mt-1 text-sm" : "mt-4 text-2xl"} font-semibold text-slate-800`}>0</div></div>)}</div></main></div></div>;
 }
