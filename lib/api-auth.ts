@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPublicEnv, isAuthRequired } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveOrganizationContext, type OrganizationRole } from "@/lib/organization-context";
+import { canAccessApi, requiredModuleForApi } from "@/lib/access-control";
 
 const AUTHORIZATION_HEADER = "authorization";
 
@@ -74,6 +75,23 @@ export async function requireApiAuth(request: NextRequest): Promise<{
             ok: false,
             response: NextResponse.json({ error: "Empresa do usuario nao encontrada." }, { status: 403 }),
           };
+        }
+        if (!canAccessApi(organization.role, request.nextUrl.pathname, request.method)) {
+          return {
+            ok: false,
+            response: NextResponse.json({ error: "Seu perfil nao possui permissao para realizar esta acao." }, { status: 403 }),
+          };
+        }
+        const requiredModule = requiredModuleForApi(request.nextUrl.pathname);
+        if (requiredModule) {
+          const moduleAccess = await serverClient.from("organization_modules").select("enabled")
+            .eq("organization_id", organization.organizationId).eq("module_key", requiredModule).maybeSingle();
+          if (!moduleAccess.data?.enabled) {
+            return {
+              ok: false,
+              response: NextResponse.json({ error: "Este modulo nao esta liberado no contrato da empresa." }, { status: 403 }),
+            };
+          }
         }
         return {
           ok: true,

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_SUBTITLE } from "@/lib/brand";
 import { DEFAULT_CLIENT_BRAND, ClientBrandSettings } from "@/lib/brand-settings";
+import { canAccessWorkspacePath } from "@/lib/access-control";
+import type { OrganizationRole } from "@/lib/organization-context";
 
 const NAV_ITEMS = [
   { section: "Principal", href: "/", label: "Inicio", module: "" },
@@ -18,9 +20,11 @@ const NAV_ITEMS = [
   { section: "Sistema", href: "/settings", label: "Configuracoes", module: "" },
 ];
 
-export function Sidebar({ clientBrand = DEFAULT_CLIENT_BRAND, enabledModules = [] }: { clientBrand?: ClientBrandSettings; enabledModules?: string[] }) {
+const ROLE_LABELS: Record<OrganizationRole, string> = { owner: "Responsável", admin: "Administrador", manager: "Gestor", member: "Usuário" };
+
+export function Sidebar({ clientBrand = DEFAULT_CLIENT_BRAND, enabledModules = [], role = "member" }: { clientBrand?: ClientBrandSettings; enabledModules?: string[]; role?: OrganizationRole }) {
   const pathname = usePathname();
-  const visibleItems = NAV_ITEMS.filter((item) => !item.module || enabledModules.includes(item.module));
+  const visibleItems = NAV_ITEMS.filter((item) => (!item.module || enabledModules.includes(item.module)) && canAccessWorkspacePath(role, item.href));
   const sections = Array.from(new Set(visibleItems.map((item) => item.section)));
   const isConsultServicesBrand = clientBrand.logoUrl === DEFAULT_CLIENT_BRAND.logoUrl;
 
@@ -36,6 +40,7 @@ export function Sidebar({ clientBrand = DEFAULT_CLIENT_BRAND, enabledModules = [
         <p className="sidebar-product-name">{BRAND_NAME}</p>
         <p className="sidebar-product-subtitle">{BRAND_SUBTITLE}</p>
         <p className="sidebar-product-owner">Uma plataforma Consult Services Tecnologia</p>
+        <p className="mt-3 w-fit rounded-full border border-white/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/90">Perfil: {ROLE_LABELS[role]}</p>
       </div>
 
       <nav className="relative mt-5 flex flex-wrap gap-4 px-3 pb-5 md:flex-col md:gap-5 md:px-3">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/api-auth";
+import { hasCapability } from "@/lib/access-control";
 import {
   addTaskAttachment,
   addTaskChecklist,
@@ -74,6 +75,9 @@ export async function POST(
 
     const { taskId } = await context.params;
     const payload = (await request.json()) as ActionPayload;
+    if (payload.action === "set_daily_selection" && !hasCapability(auth.context.organizationRole, "run_daily")) {
+      return NextResponse.json({ error: "Somente gestor, administrador ou responsavel pode preparar a Daily." }, { status: 403 });
+    }
     const normalizedTaskId = taskId.trim();
 
     let ok = false;
