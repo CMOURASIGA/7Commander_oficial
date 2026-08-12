@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/platform-admin";
 
 const ROLES = new Set(["owner", "admin", "manager", "member"]);
-const STATUSES = new Set(["active", "inactive"]);
+const STATUSES = new Set(["active", "suspended"]);
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ memberId: string }> }) {
   const access = await requirePlatformAdmin(request);
