@@ -9,6 +9,9 @@ import { getClientAuthHeaders } from "@/lib/client-auth";
 import { applyClientBrandSettings, completeClientBrand, DEFAULT_CLIENT_BRAND, type ClientBrandSettings } from "@/lib/brand-settings";
 import { canAccessWorkspacePath, isWorkspaceModuleEnabled } from "@/lib/access-control";
 import type { OrganizationRole } from "@/lib/organization-context";
+import { KairosPanelProvider } from "@/components/kairos/kairos-context";
+import { KairosLauncher } from "@/components/kairos/kairos-launcher";
+import { KairosPanel } from "@/components/kairos/kairos-panel";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -24,6 +27,7 @@ export function AppShell({ children }: AppShellProps) {
   const [clientBrand, setClientBrand] = useState<ClientBrandSettings>(DEFAULT_CLIENT_BRAND);
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [organizationRole, setOrganizationRole] = useState<OrganizationRole>("member");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const canBypassAuth = pathname === "/login" || pathname.startsWith("/auth/callback") || pathname.startsWith("/account/");
   const isPlatformAdmin = pathname.startsWith("/admin");
   const mustWaitForAuth = auth.required && auth.loading && !canBypassAuth;
@@ -54,6 +58,11 @@ export function AppShell({ children }: AppShellProps) {
     }).catch(() => { if (active) { setLicenseBlocked(true); setContextResolved(true); } }).finally(() => { if (active) setContextLoading(false); });
     return () => { active = false; };
   }, [auth.loading, auth.user, canBypassAuth, isPlatformAdmin]);
+
+  // Fecha a gaveta mobile automaticamente ao trocar de rota.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   if (canBypassAuth) {
     return (
@@ -109,13 +118,25 @@ export function AppShell({ children }: AppShellProps) {
 
   if (!canAccessWorkspacePath(organizationRole, pathname) || !isWorkspaceModuleEnabled(pathname, enabledModules)) return <div className="min-h-screen bg-(--bg-page)"><main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-4"><section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-(--accent)">Acesso restrito</p><h1 className="mt-3 text-2xl font-semibold">Seu perfil ou contrato não permite acessar esta área</h1><p className="mt-3 text-sm leading-6 text-slate-600">A área pode estar fora dos módulos contratados ou indisponível para seu perfil. Solicite ao responsável ou administrador da empresa.</p><button type="button" onClick={() => router.replace("/")} className="mt-6 rounded-xl bg-(--accent) px-5 py-3 text-sm font-semibold text-white">Voltar ao início</button></section></main></div>;
 
+  const kairosAvailable = enabledModules.includes("kairos") || enabledModules.includes("voice");
+
   return (
-    <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">
-      <Sidebar clientBrand={clientBrand} enabledModules={enabledModules} role={organizationRole} />
-      <div className="flex min-h-screen flex-1 flex-col">
-        <Header />
-        <main className="flex-1 overflow-x-hidden p-4 md:p-5">{children}</main>
+    <KairosPanelProvider isAvailable={kairosAvailable}>
+      <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">
+        <Sidebar
+          clientBrand={clientBrand}
+          enabledModules={enabledModules}
+          role={organizationRole}
+          isMobileOpen={mobileNavOpen}
+          onCloseMobile={() => setMobileNavOpen(false)}
+        />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <Header onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)} mobileNavOpen={mobileNavOpen} />
+          <main className="flex-1 overflow-x-hidden p-4 md:p-5">{children}</main>
+        </div>
+        <KairosLauncher />
+        <KairosPanel />
       </div>
-    </div>
+    </KairosPanelProvider>
   );
 }

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { getClientAuthEmail, getClientAuthHeaders } from "@/lib/client-auth";
 import { PageIntro, SectionLabel, StatusPill, SurfaceCard } from "@/components/ui/workspace-primitives";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useKairosPanel } from "@/components/kairos/kairos-context";
 
 type ProjectSummary = {
   id: string;
@@ -66,6 +68,8 @@ type TaskDetail = {
 };
 
 export default function ActivitiesPage() {
+  const confirm = useConfirm();
+  const { openPanel: openKairosPanel, isAvailable: kairosAvailable } = useKairosPanel();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [board, setBoard] = useState<TaskBoard | null>(null);
@@ -390,39 +394,56 @@ export default function ActivitiesPage() {
                   </p>
                 ) : (
                   column.cards.map((card) => (
-                    <button
-                      key={card.id}
-                      type="button"
-                      draggable={canEdit}
-                      onDragStart={() => handleDragStart(card.id)}
-                      onClick={() => {
-                        setSelectedTaskId(card.id);
-                        void loadTaskDetail(card.id);
-                      }}
-                      className="workspace-card-muted w-full cursor-grab px-3 py-3 text-left text-sm"
-                    >
-                      <p className="font-medium text-(--text-primary)">{card.title}</p>
-                      {card.labels.length ? (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {card.labels.map((label) => (
-                            <span
-                              key={label.id}
-                              className="inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                              style={{ backgroundColor: label.color }}
-                              title={label.name}
-                            >
-                              <span className="truncate">{label.name}</span>
-                            </span>
-                          ))}
+                    <div key={card.id} className="workspace-card-muted w-full text-left text-sm">
+                      <button
+                        type="button"
+                        draggable={canEdit}
+                        onDragStart={() => handleDragStart(card.id)}
+                        onClick={() => {
+                          setSelectedTaskId(card.id);
+                          void loadTaskDetail(card.id);
+                        }}
+                        className="w-full cursor-grab px-3 pt-3 text-left"
+                      >
+                        <p className="font-medium text-(--text-primary)">{card.title}</p>
+                        {card.labels.length ? (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {card.labels.map((label) => (
+                              <span
+                                key={label.id}
+                                className="inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[13px] font-medium text-white"
+                                style={{ backgroundColor: label.color }}
+                                title={label.name}
+                              >
+                                <span className="truncate">{label.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {card.description ? (
+                          <p className="mt-1 text-xs text-(--text-secondary)">{card.description}</p>
+                        ) : null}
+                        <p className="mt-2 text-[13px] uppercase tracking-wide text-(--text-secondary)">
+                          {card.priority} | {card.status}
+                        </p>
+                      </button>
+                      {kairosAvailable ? (
+                        <div className="px-3 pb-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openKairosPanel({
+                                projectId: activeProjectId,
+                                seedMessage: `Analise riscos e proximos passos para o card "${card.title}".`,
+                              })
+                            }
+                            className="kanban-kairos-chip"
+                          >
+                            ✨ Kairos
+                          </button>
                         </div>
                       ) : null}
-                      {card.description ? (
-                        <p className="mt-1 text-xs text-(--text-secondary)">{card.description}</p>
-                      ) : null}
-                      <p className="mt-2 text-[11px] uppercase tracking-wide text-(--text-secondary)">
-                        {card.priority} | {card.status}
-                      </p>
-                    </button>
+                    </div>
                   ))
                 )}
               </div>
@@ -548,7 +569,7 @@ export default function ActivitiesPage() {
                             <button
                               type="button"
                               onClick={() => void applyDetailAction({ action: "remove_label", labelId: label.id })}
-                              className="text-[11px]"
+                              className="text-[13px]"
                             >
                               x
                             </button>
@@ -721,7 +742,23 @@ export default function ActivitiesPage() {
                             {canEditDetail && currentUserEmail === comment.authorEmail.toLowerCase() ? (
                               <div className="mt-2 flex gap-2">
                                 <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.content); }} className="text-xs font-medium text-(--accent)">Editar</button>
-                                <button type="button" onClick={() => { if (window.confirm("Excluir este comentario?")) void applyDetailAction({ action: "delete_comment", commentId: comment.id }); }} className="text-xs font-medium text-red-700">Excluir</button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void (async () => {
+                                      const confirmed = await confirm({
+                                        title: "Excluir comentario?",
+                                        description: "Essa acao nao pode ser desfeita.",
+                                        confirmLabel: "Excluir",
+                                        tone: "danger",
+                                      });
+                                      if (confirmed) await applyDetailAction({ action: "delete_comment", commentId: comment.id });
+                                    })()
+                                  }
+                                  className="text-xs font-medium text-(--danger)"
+                                >
+                                  Excluir
+                                </button>
                               </div>
                             ) : null}
                           </>

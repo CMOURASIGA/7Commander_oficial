@@ -5,6 +5,7 @@ import { ChatMessage, ConversationMeta } from "@/types/chat";
 import { getClientAuthHeaders } from "@/lib/client-auth";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { PageIntro, SectionLabel, StatusPill, SurfaceCard } from "@/components/ui/workspace-primitives";
+import { useToast } from "@/components/ui/toast";
 
 type ProjectOption = { id: string; name: string; status: string };
 type KairosProfileSummary = { icebreakers: string[] };
@@ -95,6 +96,7 @@ function createConversationId(): string {
 }
 
 export default function ChatPage() {
+  const { showToast } = useToast();
   const [conversationId, setConversationId] = useState<string>(createConversationId);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -112,7 +114,10 @@ export default function ChatPage() {
   const [knowledgeSavedIds, setKnowledgeSavedIds] = useState<Record<string, boolean>>({});
   const [taskLoadingId, setTaskLoadingId] = useState<string | null>(null);
   const [saveDialog, setSaveDialog] = useState<SaveDialog>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [decisionTitleError, setDecisionTitleError] = useState<string | null>(null);
+  const [riskTitleError, setRiskTitleError] = useState<string | null>(null);
+  const [knowledgeTitleError, setKnowledgeTitleError] = useState<string | null>(null);
+  const [knowledgeContentError, setKnowledgeContentError] = useState<string | null>(null);
   const [decisionForm, setDecisionForm] = useState({ title: "", context: "", impact: "", artifactId: "" });
   const [riskForm, setRiskForm] = useState({ title: "", impact: "", probability: "", mitigation: "", owner: "" });
   const [knowledgeForm, setKnowledgeForm] = useState({ title: "", category: "registro do Kairos", content: "" });
@@ -330,8 +335,15 @@ export default function ChatPage() {
     }
   }
 
+  function resetFieldErrors() {
+    setDecisionTitleError(null);
+    setRiskTitleError(null);
+    setKnowledgeTitleError(null);
+    setKnowledgeContentError(null);
+  }
+
   function openSaveDialog(kind: SaveKind, message: ChatMessage) {
-    setSaveError(null);
+    resetFieldErrors();
     if (kind === "decision") {
       setDecisionForm({ title: getSuggestedTitle(message.content, kind), context: "", impact: "", artifactId: "" });
     } else if (kind === "risk") {
@@ -348,19 +360,19 @@ export default function ChatPage() {
   }
 
   function openDirectionPicker(message: ChatMessage) {
-    setSaveError(null);
+    resetFieldErrors();
     setSaveDialog({ kind: "choose", message });
   }
 
   async function handleSaveDecision() {
     if (!saveDialog || saveDialog.kind !== "decision" || !activeProjectId) return;
     if (!decisionForm.title.trim()) {
-      setSaveError("Informe o titulo da decisao.");
+      setDecisionTitleError("Informe o titulo da decisao.");
       return;
     }
+    setDecisionTitleError(null);
 
     setDecisionLoadingId(saveDialog.message.id);
-    setSaveError(null);
     try {
       const response = await fetch("/api/decisions", {
         method: "POST",
@@ -384,8 +396,9 @@ export default function ChatPage() {
 
       setDecisionSavedIds((prev) => ({ ...prev, [saveDialog.message.id]: true }));
       setSaveDialog(null);
+      showToast("Decisao registrada no projeto.", "success");
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Falha ao salvar decisao.");
+      showToast(error instanceof Error ? error.message : "Falha ao salvar decisao.", "error");
     } finally {
       setDecisionLoadingId(null);
     }
@@ -394,12 +407,12 @@ export default function ChatPage() {
   async function handleSaveRisk() {
     if (!saveDialog || saveDialog.kind !== "risk" || !activeProjectId) return;
     if (!riskForm.title.trim()) {
-      setSaveError("Informe o titulo do risco.");
+      setRiskTitleError("Informe o titulo do risco.");
       return;
     }
+    setRiskTitleError(null);
 
     setRiskLoadingId(saveDialog.message.id);
-    setSaveError(null);
     try {
       const response = await fetch(`/api/projects/${activeProjectId}/risks`, {
         method: "POST",
@@ -418,8 +431,9 @@ export default function ChatPage() {
 
       setRiskSavedIds((prev) => ({ ...prev, [saveDialog.message.id]: true }));
       setSaveDialog(null);
+      showToast("Risco registrado no projeto.", "success");
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Falha ao salvar risco.");
+      showToast(error instanceof Error ? error.message : "Falha ao salvar risco.", "error");
     } finally {
       setRiskLoadingId(null);
     }
@@ -427,13 +441,17 @@ export default function ChatPage() {
 
   async function handleSaveKnowledge() {
     if (!saveDialog || saveDialog.kind !== "knowledge" || !activeProjectId) return;
-    if (!knowledgeForm.title.trim() || !knowledgeForm.content.trim()) {
-      setSaveError("Informe um titulo e o conteudo para guardar.");
+    const titleMissing = !knowledgeForm.title.trim();
+    const contentMissing = !knowledgeForm.content.trim();
+    if (titleMissing || contentMissing) {
+      setKnowledgeTitleError(titleMissing ? "Informe um titulo." : null);
+      setKnowledgeContentError(contentMissing ? "Informe o conteudo que sera guardado." : null);
       return;
     }
+    setKnowledgeTitleError(null);
+    setKnowledgeContentError(null);
 
     setKnowledgeLoadingId(saveDialog.message.id);
-    setSaveError(null);
     try {
       const response = await fetch("/api/knowledge", {
         method: "POST",
@@ -451,8 +469,9 @@ export default function ChatPage() {
 
       setKnowledgeSavedIds((prev) => ({ ...prev, [saveDialog.message.id]: true }));
       setSaveDialog(null);
+      showToast("Conhecimento guardado no projeto.", "success");
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Falha ao guardar conhecimento.");
+      showToast(error instanceof Error ? error.message : "Falha ao guardar conhecimento.", "error");
     } finally {
       setKnowledgeLoadingId(null);
     }
@@ -462,12 +481,11 @@ export default function ChatPage() {
     if (!saveDialog || saveDialog.kind !== "task" || !activeProjectId) return;
     const selectedTasks = taskDrafts.filter((task) => task.selected && task.title.trim());
     if (selectedTasks.length === 0) {
-      setSaveError("Selecione ao menos uma atividade com titulo.");
+      showToast("Selecione ao menos uma atividade com titulo.", "error");
       return;
     }
 
     setTaskLoadingId(saveDialog.message.id);
-    setSaveError(null);
     try {
       for (const task of selectedTasks) {
         const response = await fetch(`/api/projects/${activeProjectId}/tasks`, {
@@ -486,8 +504,12 @@ export default function ChatPage() {
       }
 
       setSaveDialog(null);
+      showToast(
+        selectedTasks.length === 1 ? "Atividade criada no Kanban." : `${selectedTasks.length} atividades criadas no Kanban.`,
+        "success",
+      );
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Falha ao criar atividade no Kanban.");
+      showToast(error instanceof Error ? error.message : "Falha ao criar atividade no Kanban.", "error");
     } finally {
       setTaskLoadingId(null);
     }
@@ -573,7 +595,7 @@ export default function ChatPage() {
 
         <SurfaceCard className="min-h-0 flex-1 overflow-y-auto p-4">
           {voiceError ? (
-            <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{voiceError}</p>
+            <p className="mb-3 rounded-lg bg-(--danger-soft) px-3 py-2 text-xs text-(--danger)">{voiceError}</p>
           ) : null}
           {!hasMessages ? (
             <div>
@@ -622,7 +644,7 @@ export default function ChatPage() {
                   )}
                   <p
                     className={[
-                      "mt-1 text-[11px]",
+                      "mt-1 text-[13px]",
                       message.role === "user" ? "text-white/75" : "text-(--text-secondary)",
                     ].join(" ")}
                   >
@@ -640,7 +662,7 @@ export default function ChatPage() {
                         type="button"
                         onClick={() => handleListen(message)}
                         disabled={voiceLoadingId === message.id}
-                        className="workspace-button-secondary px-3 py-2 text-[11px]"
+                        className="workspace-button-secondary px-3 py-2 text-[13px]"
                       >
                         {voiceLoadingId === message.id
                           ? "Gerando audio..."
@@ -651,7 +673,7 @@ export default function ChatPage() {
                       <button
                         type="button"
                         onClick={() => openDirectionPicker(message)}
-                        className="workspace-button-primary px-3 py-2 text-[11px]"
+                        className="workspace-button-primary px-3 py-2 text-[13px]"
                       >
                         Direcionar resposta
                       </button>
@@ -661,7 +683,7 @@ export default function ChatPage() {
                           type="button"
                           onClick={() => openSaveDialog("decision", message)}
                           disabled={decisionLoadingId === message.id || decisionSavedIds[message.id]}
-                          className="workspace-button-secondary px-3 py-2 text-[11px]"
+                          className="workspace-button-secondary px-3 py-2 text-[13px]"
                         >
                           {decisionSavedIds[message.id] ? "Decisao salva" : "Registrar decisao sugerida"}
                         </button>
@@ -671,7 +693,7 @@ export default function ChatPage() {
                           type="button"
                           onClick={() => openSaveDialog("risk", message)}
                           disabled={riskLoadingId === message.id || riskSavedIds[message.id]}
-                          className="workspace-button-secondary px-3 py-2 text-[11px]"
+                          className="workspace-button-secondary px-3 py-2 text-[13px]"
                         >
                           {riskSavedIds[message.id] ? "Risco salvo" : "Registrar risco identificado"}
                         </button>
@@ -766,7 +788,16 @@ export default function ChatPage() {
             ) : saveDialog.kind === "decision" ? (
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <label className="sm:col-span-2 text-xs font-medium text-(--text-primary)">Titulo da decisao
-                  <input value={decisionForm.title} onChange={(event) => setDecisionForm((prev) => ({ ...prev, title: event.target.value }))} className="workspace-input mt-1 w-full" />
+                  <input
+                    value={decisionForm.title}
+                    onChange={(event) => {
+                      setDecisionForm((prev) => ({ ...prev, title: event.target.value }));
+                      if (decisionTitleError) setDecisionTitleError(null);
+                    }}
+                    aria-invalid={Boolean(decisionTitleError)}
+                    className={`workspace-input mt-1 w-full ${decisionTitleError ? "field-invalid" : ""}`}
+                  />
+                  {decisionTitleError ? <p className="field-error">{decisionTitleError}</p> : null}
                 </label>
                 <label className="text-xs font-medium text-(--text-primary)">Contexto
                   <textarea value={decisionForm.context} onChange={(event) => setDecisionForm((prev) => ({ ...prev, context: event.target.value }))} className="workspace-input mt-1 min-h-24 w-full" />
@@ -781,7 +812,16 @@ export default function ChatPage() {
             ) : saveDialog.kind === "risk" ? (
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <label className="sm:col-span-2 text-xs font-medium text-(--text-primary)">Titulo do risco
-                  <input value={riskForm.title} onChange={(event) => setRiskForm((prev) => ({ ...prev, title: event.target.value }))} className="workspace-input mt-1 w-full" />
+                  <input
+                    value={riskForm.title}
+                    onChange={(event) => {
+                      setRiskForm((prev) => ({ ...prev, title: event.target.value }));
+                      if (riskTitleError) setRiskTitleError(null);
+                    }}
+                    aria-invalid={Boolean(riskTitleError)}
+                    className={`workspace-input mt-1 w-full ${riskTitleError ? "field-invalid" : ""}`}
+                  />
+                  {riskTitleError ? <p className="field-error">{riskTitleError}</p> : null}
                 </label>
                 <label className="text-xs font-medium text-(--text-primary)">Impacto
                   <input value={riskForm.impact} onChange={(event) => setRiskForm((prev) => ({ ...prev, impact: event.target.value }))} className="workspace-input mt-1 w-full" />
@@ -799,13 +839,31 @@ export default function ChatPage() {
             ) : saveDialog.kind === "knowledge" ? (
               <div className="mt-5 grid gap-3">
                 <label className="text-xs font-medium text-(--text-primary)">Titulo do conhecimento
-                  <input value={knowledgeForm.title} onChange={(event) => setKnowledgeForm((prev) => ({ ...prev, title: event.target.value }))} className="workspace-input mt-1 w-full" />
+                  <input
+                    value={knowledgeForm.title}
+                    onChange={(event) => {
+                      setKnowledgeForm((prev) => ({ ...prev, title: event.target.value }));
+                      if (knowledgeTitleError) setKnowledgeTitleError(null);
+                    }}
+                    aria-invalid={Boolean(knowledgeTitleError)}
+                    className={`workspace-input mt-1 w-full ${knowledgeTitleError ? "field-invalid" : ""}`}
+                  />
+                  {knowledgeTitleError ? <p className="field-error">{knowledgeTitleError}</p> : null}
                 </label>
                 <label className="text-xs font-medium text-(--text-primary)">Categoria
                   <input value={knowledgeForm.category} onChange={(event) => setKnowledgeForm((prev) => ({ ...prev, category: event.target.value }))} className="workspace-input mt-1 w-full" />
                 </label>
                 <label className="text-xs font-medium text-(--text-primary)">Conteudo que sera guardado
-                  <textarea value={knowledgeForm.content} onChange={(event) => setKnowledgeForm((prev) => ({ ...prev, content: event.target.value }))} className="workspace-input mt-1 min-h-48 w-full" />
+                  <textarea
+                    value={knowledgeForm.content}
+                    onChange={(event) => {
+                      setKnowledgeForm((prev) => ({ ...prev, content: event.target.value }));
+                      if (knowledgeContentError) setKnowledgeContentError(null);
+                    }}
+                    aria-invalid={Boolean(knowledgeContentError)}
+                    className={`workspace-input mt-1 min-h-48 w-full ${knowledgeContentError ? "field-invalid" : ""}`}
+                  />
+                  {knowledgeContentError ? <p className="field-error">{knowledgeContentError}</p> : null}
                 </label>
               </div>
             ) : (
@@ -849,7 +907,6 @@ export default function ChatPage() {
               </div>
             )}
 
-            {saveError ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{saveError}</p> : null}
             {saveDialog.kind !== "choose" ? <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setSaveDialog(null)} className="workspace-button-secondary px-4 py-2 text-sm">Cancelar</button>
               <button

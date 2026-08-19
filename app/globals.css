@@ -347,3 +347,436 @@ a {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--accent) 35%, white);
 }
+
+/* ---------------------------------------------------------------------- */
+/* Navegacao responsiva: gaveta no mobile, rail de icones no tablet        */
+/* ---------------------------------------------------------------------- */
+
+.sidebar-shell {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  width: 280px;
+  max-width: 82vw;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+
+.sidebar-shell.is-open {
+  transform: translateX(0);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.45);
+  border: none;
+  padding: 0;
+  animation: sidebarBackdropFade 0.2s ease;
+}
+
+@keyframes sidebarBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sidebar-close {
+  color: #edf8ff;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.mobile-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-primary);
+  flex: 0 0 auto;
+}
+
+@media (min-width: 768px) {
+  .sidebar-shell {
+    /* relative (nao static): mantem o overlay decorativo e o botao de
+       fechar contidos dentro da propria sidebar em vez de vazarem para a
+       viewport inteira, o que sequestrava cliques no lançador do Kairos. */
+    position: relative;
+    inset: auto;
+    transform: none;
+    max-width: none;
+    width: 76px;
+  }
+  .sidebar-backdrop,
+  .sidebar-close {
+    display: none;
+  }
+  .mobile-nav-toggle {
+    display: none;
+  }
+  .sidebar-rail-only {
+    display: none;
+  }
+  .sidebar-brand-panel {
+    height: 76px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .sidebar-brand-logo-frame {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+  .sidebar-brand-logo-frame-consult {
+    width: 52px;
+    flex-basis: 52px;
+  }
+  .sidebar-brand-logo-consult {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar-shell {
+    width: 250px;
+  }
+  .sidebar-rail-only {
+    display: revert;
+  }
+  .sidebar-brand-panel {
+    height: 112px;
+    padding: 14px 18px;
+  }
+  .sidebar-brand-logo-frame {
+    width: 96px;
+    height: 96px;
+    flex-basis: 96px;
+  }
+  .sidebar-brand-logo-frame-consult {
+    width: min(100%, 188px);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Toasts                                                                  */
+/* ---------------------------------------------------------------------- */
+
+.toast-viewport {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 80;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.55rem;
+  width: min(360px, calc(100vw - 2rem));
+}
+
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  animation: toastIn 0.18s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-message {
+  flex: 1;
+}
+
+.toast-dismiss {
+  flex: 0 0 auto;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.toast-dismiss:hover {
+  opacity: 1;
+}
+
+.toast-success {
+  border-color: color-mix(in srgb, var(--success) 36%, white);
+  background: var(--success-soft);
+  color: var(--success-deep);
+}
+
+.toast-error {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.toast-info {
+  border-color: color-mix(in srgb, var(--accent) 32%, white);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Confirmacao (substitui window.confirm)                                  */
+/* ---------------------------------------------------------------------- */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  padding: 1rem;
+}
+
+.confirm-card {
+  width: 100%;
+  max-width: 26rem;
+  border-radius: 1.2rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  padding: 1.4rem;
+}
+
+.confirm-card h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-card p {
+  margin: 0.6rem 0 0;
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  margin-top: 1.2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Kairos: ponto de entrada unico + painel                                 */
+/* ---------------------------------------------------------------------- */
+
+.kairos-launcher {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--brand-highlight));
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  box-shadow: 0 16px 30px -12px rgba(0, 59, 115, 0.55);
+  transition: transform 0.15s ease;
+}
+
+.kairos-launcher:hover {
+  transform: translateY(-2px);
+}
+
+.kairos-launcher-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7cf2c4;
+  box-shadow: 0 0 0 3px rgba(124, 242, 196, 0.32);
+}
+
+.kairos-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.kairos-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  border: none;
+  padding: 0;
+}
+
+.kairos-panel-shell {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  max-width: 26rem;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  animation: kairosPanelIn 0.2s ease;
+}
+
+@keyframes kairosPanelIn {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.kairos-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.kairos-panel-eyebrow {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-highlight);
+}
+
+.kairos-panel-sub {
+  margin: 0.15rem 0 0;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kairos-panel-close {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.kairos-panel-project {
+  padding: 0.8rem 1.1rem 0;
+}
+
+.kairos-panel-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.kairos-panel-empty {
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  line-height: 1.55;
+}
+
+.kairos-bubble {
+  max-width: 92%;
+  border-radius: 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+}
+
+.kairos-bubble-user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+}
+
+.kairos-bubble-assistant {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.kairos-panel-form {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.kairos-panel-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0 1.1rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.kairos-panel-footer a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, white);
+}
+
+/* Sugestao inline do Kairos, ancorada num card do Kanban */
+.kanban-kairos-chip {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand-highlight) 45%, white);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.kanban-kairos-chip:hover {
+  background: color-mix(in srgb, var(--brand-highlight) 22%, var(--accent-soft));
+}
+
+/* Validacao inline em formularios (substitui a linha de erro generica) */
+.field-error {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.field-invalid {
+  border-color: var(--danger-border) !important;
+}

@@ -65,7 +65,7 @@ export default function LoginPage() {
           Acesso fornecido pela Consult Services e vinculado à empresa contratante.
         </p>
         {message ? <p className="mt-3 text-center text-sm text-(--success)">{message}</p> : null}
-        {error ? <p className="mt-3 text-center text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="mt-3 text-center text-sm text-(--danger)">{error}</p> : null}
       </div>
     </section>
   );

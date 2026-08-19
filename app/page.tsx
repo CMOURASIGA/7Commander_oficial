@@ -193,19 +193,19 @@ export default function HomePage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href="/projects"
-            className="workspace-button-primary rounded-lg px-3 py-2 text-[12px]"
+            className="workspace-button-primary rounded-lg px-3 py-2 text-[13px]"
           >
             Criar projeto
           </Link>
           <Link
             href="/clients"
-            className="rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-[12px] font-medium text-(--text-primary)"
+            className="rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-[13px] font-medium text-(--text-primary)"
           >
             Criar cliente
           </Link>
           <Link
             href="/projects"
-            className="rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-[12px] font-medium text-(--text-primary)"
+            className="rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-[13px] font-medium text-(--text-primary)"
           >
             Artefatos
           </Link>
@@ -219,14 +219,14 @@ export default function HomePage() {
           </span>
           <div>
             <p className="text-[13px] font-medium text-(--accent-strong)">Voice Room disponível</p>
-            <p className="text-[12px] text-(--brand-ink)">
+            <p className="text-[13px] text-(--brand-ink)">
               Converse com o Kairos sobre o projeto ativo em tempo real.
             </p>
           </div>
         </div>
         <Link
           href="/voice"
-          className="workspace-button-primary rounded-lg px-3 py-2 text-[12px]"
+          className="workspace-button-primary rounded-lg px-3 py-2 text-[13px]"
         >
           Abrir
         </Link>
@@ -256,7 +256,7 @@ export default function HomePage() {
           {staleProjects.length === 0 ? (
             <div className="workspace-empty-state mt-4 flex min-h-28 flex-col items-start justify-center">
               <p className="font-medium text-(--text-primary)">Nenhum projeto cadastrado.</p>
-              <p className="mt-1 text-[12px]">Crie seu primeiro projeto para começar a acompanhar execução, decisões e riscos.</p>
+              <p className="mt-1 text-[13px]">Crie seu primeiro projeto para começar a acompanhar execução, decisões e riscos.</p>
               <Link href="/projects" className="workspace-button-primary mt-3 text-xs">Criar primeiro projeto</Link>
             </div>
           ) : (
@@ -274,11 +274,11 @@ export default function HomePage() {
                   >
                     <div>
                       <p className="text-[13px] font-medium text-(--text-primary)">{item.name}</p>
-                      <p className="mt-1 text-[11px] text-(--text-tertiary)">{formatProjectAge(item.createdAt)}</p>
+                      <p className="mt-1 text-[13px] text-(--text-tertiary)">{formatProjectAge(item.createdAt)}</p>
                     </div>
                     <span
                       className={[
-                        "rounded-full px-3 py-1 text-[11px] font-medium",
+                        "rounded-full px-3 py-1 text-[13px] font-medium",
                         stale
                           ? "bg-(--warning-soft) text-(--warning)"
                           : "bg-(--success-soft) text-(--success)",
@@ -303,14 +303,14 @@ export default function HomePage() {
           {counters.riskyProjects === 0 ? (
             <div className="workspace-empty-state mt-4 flex min-h-28 flex-col items-center justify-center gap-2 text-center">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-(--success-soft) text-(--success)">✓</span>
-              <p className="text-[12px] text-(--text-secondary)">Nenhum projeto em risco no momento.</p>
+              <p className="text-[13px] text-(--text-secondary)">Nenhum projeto em risco no momento.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {risks.slice(0, 4).map((risk) => (
                 <div key={risk.id} className="rounded-xl border border-(--border) bg-(--bg-muted) px-3 py-3">
                   <p className="text-[13px] font-medium text-(--text-primary)">{risk.title}</p>
-                  <p className="mt-1 text-[11px] text-(--danger)">Status: {risk.status}</p>
+                  <p className="mt-1 text-[13px] text-(--danger)">Status: {risk.status}</p>
                 </div>
               ))}
             </div>
@@ -324,12 +324,12 @@ export default function HomePage() {
             <p className="card-title">Projeto ativo</p>
           </div>
           <p className="text-[13px] font-medium text-(--text-primary)">{project.name}</p>
-          <p className="mt-1 text-[12px] text-(--text-secondary)">
+          <p className="mt-1 text-[13px] text-(--text-secondary)">
             Cliente: {project.clientName || "Não vinculado"} · Status: {project.status}
           </p>
           <p className="mt-2 text-[13px] text-(--text-secondary)">{project.objective || project.context || "Sem objetivo definido."}</p>
           {board ? (
-            <p className="mt-3 text-[11px] text-(--text-tertiary)">
+            <p className="mt-3 text-[13px] text-(--text-tertiary)">
               Quadro atual: {board.columns.reduce((total, column) => total + column.cards.length, 0)} cards em execução.
             </p>
           ) : null}
@@ -370,7 +370,7 @@ function MetricCard({
         <DashboardIcon type={icon} />
       </div>
       <p className={["mt-3 text-[28px] font-medium", tone === "danger" ? "text-(--danger)" : "text-(--text-primary)"].join(" ")}>{value}</p>
-      <p className="mt-1 text-[11px] text-(--text-tertiary)">{sub}</p>
+      <p className="mt-1 text-[13px] text-(--text-tertiary)">{sub}</p>
     </article>
   );
 }

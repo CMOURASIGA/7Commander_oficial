@@ -217,14 +217,14 @@ export default function ClientsPage() {
                   <button
                     type="button"
                     onClick={() => handleEdit(client)}
-                    className="workspace-button-secondary px-3 py-2 text-[11px]"
+                    className="workspace-button-secondary px-3 py-2 text-[13px]"
                   >
                     Editar
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleDelete(client.id)}
-                    className="workspace-button-secondary px-3 py-2 text-[11px]"
+                    className="workspace-button-secondary px-3 py-2 text-[13px]"
                   >
                     Remover
                   </button>

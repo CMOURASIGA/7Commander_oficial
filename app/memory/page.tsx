@@ -235,7 +235,7 @@ export default function MemoryPage() {
                   type="button"
                   onClick={() => void patchMemory(memory.id, { priority: "P0", type: "fixed" })}
                   disabled={updatingId === memory.id}
-                  className="workspace-button-secondary px-3 py-2 text-[11px]"
+                  className="workspace-button-secondary px-3 py-2 text-[13px]"
                 >
                   Fixar (P0)
                 </button>
@@ -243,7 +243,7 @@ export default function MemoryPage() {
                   type="button"
                   onClick={() => void sendFeedback(memory.id, "useful")}
                   disabled={updatingId === memory.id}
-                  className="workspace-button-secondary px-3 py-2 text-[11px]"
+                  className="workspace-button-secondary px-3 py-2 text-[13px]"
                 >
                   Util
                 </button>
@@ -251,7 +251,7 @@ export default function MemoryPage() {
                   type="button"
                   onClick={() => void sendFeedback(memory.id, "not_useful")}
                   disabled={updatingId === memory.id}
-                  className="workspace-button-secondary px-3 py-2 text-[11px]"
+                  className="workspace-button-secondary px-3 py-2 text-[13px]"
                 >
                   Nao util
                 </button>
@@ -259,7 +259,7 @@ export default function MemoryPage() {
                   type="button"
                   onClick={() => void patchMemory(memory.id, { priority: "P4", type: "obsolete" })}
                   disabled={updatingId === memory.id}
-                  className="workspace-button-secondary px-3 py-2 text-[11px]"
+                  className="workspace-button-secondary px-3 py-2 text-[13px]"
                 >
                   Marcar obsoleta
                 </button>
@@ -267,7 +267,7 @@ export default function MemoryPage() {
                   type="button"
                   onClick={() => void handleEdit(memory)}
                   disabled={updatingId === memory.id}
-                  className="workspace-button-primary px-3 py-2 text-[11px]"
+                  className="workspace-button-primary px-3 py-2 text-[13px]"
                 >
                   Editar
                 </button>

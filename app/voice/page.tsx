@@ -7,6 +7,7 @@ import { useKairosAuth } from "@/components/auth/kairos-auth-provider";
 import { BRAND_NAME } from "@/lib/brand";
 import { VoiceGlyph } from "@/components/icons/voice-icons";
 import { SectionLabel, StatusPill } from "@/components/ui/workspace-primitives";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 type VoiceState = "inativo" | "ouvindo" | "processando" | "respondendo" | "pausado" | "erro";
 
@@ -82,6 +83,7 @@ function addSessionEvent(setter: React.Dispatch<React.SetStateAction<string[]>>,
 
 export default function VoiceRoomPage() {
   const auth = useKairosAuth();
+  const confirm = useConfirm();
   const [voiceState, setVoiceState] = useState<VoiceState>("inativo");
   const [error, setError] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string>(createConversationId);
@@ -198,7 +200,12 @@ export default function VoiceRoomPage() {
       return;
     }
     if (projectId !== activeProjectId && messages.length > 0) {
-      const confirmed = window.confirm("Trocar o projeto inicia uma nova conversa de Voice Room. Deseja continuar?");
+      const confirmed = await confirm({
+        title: "Trocar de projeto?",
+        description: "Trocar o projeto inicia uma nova conversa de Voice Room. O histórico atual continua salvo, mas deixa de aparecer aqui.",
+        confirmLabel: "Trocar projeto",
+        cancelLabel: "Continuar aqui",
+      });
       if (!confirmed) return;
       setConversationId(createConversationId());
       setMessages([]);
@@ -482,7 +489,7 @@ export default function VoiceRoomPage() {
                     Centro online
                   </StatusPill>
                 </div>
-                <p className="mt-2 max-w-xl text-[12px] text-(--text-secondary)">
+                <p className="mt-2 max-w-xl text-[13px] text-(--text-secondary)">
                   Escolha o projeto que deve guiar o contexto desta conversa.
                 </p>
               </div>
@@ -503,7 +510,7 @@ export default function VoiceRoomPage() {
                     </option>
                   ))}
                 </select>
-                <div className="mt-2 flex items-center justify-between gap-3 text-[11px]">
+                <div className="mt-2 flex items-center justify-between gap-3 text-[13px]">
                   <p
                     className="min-w-0 truncate font-medium text-(--text-primary)"
                     title={activeProjectLabel}
@@ -514,7 +521,7 @@ export default function VoiceRoomPage() {
                     {projects.length} projetos
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-(--text-secondary)">
+                <p className="mt-1 text-[13px] text-(--text-secondary)">
                   Status: {activeProjectStatusLabel}
                 </p>
               </div>
@@ -523,7 +530,7 @@ export default function VoiceRoomPage() {
 
           <div className="flex-1 overflow-y-auto bg-[var(--color-background-tertiary)] px-5 py-5">
             <div className="mb-5 text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--bg-surface) px-3 py-1 text-[11px] text-(--text-tertiary)">
+              <span className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--bg-surface) px-3 py-1 text-[13px] text-(--text-tertiary)">
                 Hoje, {currentDateLabel}
               </span>
             </div>
@@ -545,7 +552,7 @@ export default function VoiceRoomPage() {
                     <div className={message.role === "assistant" ? "flex gap-3" : "flex flex-row-reverse gap-3"}>
                       <span
                         className={[
-                          "inline-flex h-[30px] w-[30px] items-center justify-center rounded-full text-[11px] font-medium",
+                          "inline-flex h-[30px] w-[30px] items-center justify-center rounded-full text-[13px] font-medium",
                           message.role === "assistant"
                             ? "bg-(--accent-soft) text-(--accent-strong)"
                             : "bg-(--accent) text-white",
@@ -564,7 +571,7 @@ export default function VoiceRoomPage() {
                         >
                           {message.content}
                         </div>
-                        <p className="mt-1 px-1 text-[10px] text-(--text-tertiary)">
+                        <p className="mt-1 px-1 text-[13px] text-(--text-tertiary)">
                           {new Date(message.createdAt).toLocaleTimeString("pt-BR", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -604,7 +611,7 @@ export default function VoiceRoomPage() {
                     : voiceUiState === "processing"
                       ? "border-(--success) bg-(--success-soft) text-(--success)"
                     : voiceUiState === "paused"
-                        ? "border-[color:#B4B2A9] bg-(--bg-muted) text-(--text-secondary)"
+                        ? "border-(--muted-strong) bg-(--bg-muted) text-(--text-secondary)"
                         : "border-(--border-strong) bg-(--accent-soft) text-(--accent-strong)",
                 ].join(" ")}
                 disabled={!activeProjectId || isBusy}
@@ -613,7 +620,7 @@ export default function VoiceRoomPage() {
               </button>
               <div>
                 <p className="text-[13px] font-medium text-(--text-primary)">{stateLabels.label}</p>
-                <p className="text-[12px] text-(--text-secondary)">{stateLabels.sub}</p>
+                <p className="text-[13px] text-(--text-secondary)">{stateLabels.sub}</p>
               </div>
             </div>
 
@@ -622,14 +629,14 @@ export default function VoiceRoomPage() {
                 type="button"
                 onClick={pauseListening}
                 disabled={voiceState === "inativo" || isBusy}
-                className="workspace-button-secondary px-3 py-2 text-[12px]"
+                className="workspace-button-secondary px-3 py-2 text-[13px]"
               >
                 {pauseLabel}
               </button>
               <button
                 type="button"
                 onClick={finishSession}
-                className="workspace-button-danger px-3 py-2 text-[12px]"
+                className="workspace-button-danger px-3 py-2 text-[13px]"
               >
                 Encerrar
               </button>
@@ -642,7 +649,7 @@ export default function VoiceRoomPage() {
                 checked={continuousMode}
                 onChange={(event) => setContinuousMode(event.target.checked)}
               />
-              <label htmlFor="modo-continuo" className="text-[12px] text-(--text-secondary)">
+              <label htmlFor="modo-continuo" className="text-[13px] text-(--text-secondary)">
                 Modo contínuo (escuta novamente após responder)
               </label>
             </div>
@@ -660,7 +667,7 @@ export default function VoiceRoomPage() {
                 type="button"
                 onClick={() => void handleTextSubmit()}
                 disabled={!activeProjectId || isBusy}
-                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-(--accent) text-[12px] text-white"
+                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-(--accent) text-[13px] text-white"
               >
                 →
               </button>
@@ -673,11 +680,11 @@ export default function VoiceRoomPage() {
         <div className="space-y-4">
           <section>
             <SectionLabel>Contexto ativo</SectionLabel>
-            <div className="mt-2 rounded-lg border border-[color:#9FE1CB] bg-(--success-soft) px-3 py-3">
-              <p className="text-[12px] font-medium text-[color:#0F6E56]">
+            <div className="mt-2 rounded-lg border border-(--success-border) bg-(--success-soft) px-3 py-3">
+              <p className="text-[13px] font-medium text-(--success-strong)">
                 {activeProject?.name ?? "Nenhum projeto ativo"}
               </p>
-              <p className="mt-1 text-[11px] text-[color:#085041]">
+              <p className="mt-1 text-[13px] text-(--success-deep)">
                 {projects.length} projetos · {messages.length} interações
               </p>
             </div>
@@ -687,10 +694,10 @@ export default function VoiceRoomPage() {
             <SectionLabel>Memória da sessão</SectionLabel>
             <div className="space-y-2">
               {sessionMemory.length === 0 ? (
-                <p className="mt-2 text-[12px] text-(--text-tertiary)">As ações da sessão aparecerão aqui em tempo real.</p>
+                <p className="mt-2 text-[13px] text-(--text-tertiary)">As ações da sessão aparecerão aqui em tempo real.</p>
               ) : (
                 sessionMemory.map((entry) => (
-                  <div key={entry} className="workspace-card-muted flex gap-2 px-3 py-2 text-[12px] text-(--text-primary)">
+                  <div key={entry} className="workspace-card-muted flex gap-2 px-3 py-2 text-[13px] text-(--text-primary)">
                     <span className="text-(--text-tertiary)">•</span>
                     <span>{entry}</span>
                   </div>
@@ -709,7 +716,7 @@ export default function VoiceRoomPage() {
           </section>
 
           {error ? (
-            <section className="rounded-lg border border-[color:#F09595] bg-(--danger-soft) px-3 py-3 text-[12px] text-(--danger)">
+            <section className="rounded-lg border border-(--danger-border) bg-(--danger-soft) px-3 py-3 text-[13px] text-(--danger)">
               {error}
             </section>
           ) : null}
@@ -723,7 +730,7 @@ function QuickAction({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="workspace-card-muted block px-3 py-2 text-[12px] text-(--text-primary)"
+      className="workspace-card-muted block px-3 py-2 text-[13px] text-(--text-primary)"
     >
       {label}
     </Link>

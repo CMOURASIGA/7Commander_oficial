@@ -15,7 +15,7 @@ const sizeMap = {
     logo: "h-auto w-[172px]",
     title: "text-sm",
     subtitle: "text-[13px]",
-    description: "text-[11px]",
+    description: "text-[13px]",
   },
   md: {
     logo: "h-auto w-[220px]",

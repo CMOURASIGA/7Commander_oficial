@@ -5,6 +5,7 @@ import { Decision, DecisionStatus } from "@/types/decision";
 import { getClientAuthHeaders } from "@/lib/client-auth";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { PageIntro, SectionLabel, StatusPill } from "@/components/ui/workspace-primitives";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const STATUS_LABELS: Record<DecisionStatus, string> = {
   aberta: "Aberta",
@@ -106,7 +107,7 @@ function ProjectRoutine({
           <span className="block text-sm font-semibold text-(--text-primary)">{title}</span>
           <span className="mt-0.5 block text-xs text-(--text-secondary)">{description}</span>
         </span>
-        {badge ? <span className="rounded-full bg-(--bg-muted) px-2 py-1 text-[11px] font-medium text-(--text-secondary)">{badge}</span> : null}
+        {badge ? <span className="rounded-full bg-(--bg-muted) px-2 py-1 text-[13px] font-medium text-(--text-secondary)">{badge}</span> : null}
       </button>
       {isOpen ? <div className="border-t border-(--border) bg-(--bg-muted)/50 p-4">{children}</div> : null}
     </section>
@@ -140,6 +141,7 @@ function KnowledgeContent({ content }: { content: string }) {
 }
 
 export default function ProjectsPage() {
+  const confirm = useConfirm();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedClientIdForCreate, setSelectedClientIdForCreate] = useState<string>("");
@@ -577,7 +579,14 @@ export default function ProjectsPage() {
   }
 
   async function handleDeleteKnowledge(item: KnowledgeItem) {
-    if (!activeProjectId || deletingKnowledgeId || !window.confirm(`Excluir "${item.title}"? Depois você poderá enviar o arquivo original novamente.`)) return;
+    if (!activeProjectId || deletingKnowledgeId) return;
+    const confirmed = await confirm({
+      title: `Excluir "${item.title}"?`,
+      description: "Depois você poderá enviar o arquivo original novamente.",
+      confirmLabel: "Excluir",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setDeletingKnowledgeId(item.id);
     try {
       const response = await fetch(`/api/knowledge?id=${encodeURIComponent(item.id)}`, { method: "DELETE", headers: getClientAuthHeaders() });
@@ -718,7 +727,7 @@ export default function ProjectsPage() {
               ].join(" ")}
             >
               <p className="font-semibold">{project.name}</p>
-              <p className="mt-1 text-[11px]">Cliente: {project.clientName ?? "Nao vinculado"}</p>
+              <p className="mt-1 text-[13px]">Cliente: {project.clientName ?? "Nao vinculado"}</p>
               <p className="mt-1">{project.status}</p>
             </button>
           ))}
@@ -893,7 +902,7 @@ export default function ProjectsPage() {
                       value={risk.status}
                       onChange={(event) => void handleRiskStatusChange(risk.id, event.target.value as RiskItem["status"])}
                       disabled={updatingRiskId === risk.id}
-                      className="rounded-md border border-(--border) bg-white px-2 py-1 text-[11px] text-(--text-primary)"
+                      className="rounded-md border border-(--border) bg-white px-2 py-1 text-[13px] text-(--text-primary)"
                     >
                       <option value="aberto">aberto</option>
                       <option value="em_mitigacao">em_mitigacao</option>
@@ -901,13 +910,13 @@ export default function ProjectsPage() {
                       <option value="encerrado">encerrado</option>
                     </select>
                   </div>
-                  <p className="mt-1 text-[11px] text-(--text-secondary)">
+                  <p className="mt-1 text-[13px] text-(--text-secondary)">
                     Impacto: {risk.impact || "Nao informado"} | Probabilidade: {risk.probability || "Nao informada"}
                   </p>
-                  <p className="mt-1 text-[11px] text-(--text-secondary)">
+                  <p className="mt-1 text-[13px] text-(--text-secondary)">
                     Dono: {risk.owner || "Nao definido"} | Mitigacao: {risk.mitigation || "Nao definida"}
                   </p>
-                  <p className="mt-1 text-[11px] text-(--text-secondary)">
+                  <p className="mt-1 text-[13px] text-(--text-secondary)">
                     Decisao: {risk.decisionId || "Nao vinculada"} | Tarefa: {risk.taskId || "Nao vinculada"}
                   </p>
                 </article>
@@ -938,11 +947,11 @@ export default function ProjectsPage() {
                 <article key={item.id} className="rounded-lg border border-(--border) bg-white p-3">
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-xs font-semibold text-(--text-primary)">{item.title}</p>
-                    <button type="button" onClick={() => void handleDeleteKnowledge(item)} disabled={deletingKnowledgeId === item.id} className="workspace-button-danger px-3 py-2 text-[11px]">
+                    <button type="button" onClick={() => void handleDeleteKnowledge(item)} disabled={deletingKnowledgeId === item.id} className="workspace-button-danger px-3 py-2 text-[13px]">
                       {deletingKnowledgeId === item.id ? "Excluindo..." : "Excluir documento"}
                     </button>
                   </div>
-                  <p className="mt-1 text-[11px] text-(--text-secondary)">
+                  <p className="mt-1 text-[13px] text-(--text-secondary)">
                     {item.category} | {item.source} | {new Date(item.createdAt).toLocaleString("pt-BR")}
                   </p>
                   <details className="group">
@@ -1106,7 +1115,7 @@ export default function ProjectsPage() {
                         type="button"
                         onClick={() => void handleRevokeMember(member.id)}
                         disabled={removingMemberId === member.id}
-                        className="rounded-md border border-(--border) bg-(--bg-muted) px-2 py-1 text-[11px] text-(--text-primary)"
+                        className="rounded-md border border-(--border) bg-(--bg-muted) px-2 py-1 text-[13px] text-(--text-primary)"
                       >
                         {removingMemberId === member.id ? "Revogando..." : "Revogar"}
                       </button>
@@ -1224,12 +1233,12 @@ export default function ProjectsPage() {
                   type="button"
                   onClick={() => void loadDecisionHistory(decision.id)}
                   disabled={historyLoadingId === decision.id}
-                  className="rounded-md border border-(--border) bg-(--bg-muted) px-2 py-1 text-[11px] text-(--text-primary)"
+                  className="rounded-md border border-(--border) bg-(--bg-muted) px-2 py-1 text-[13px] text-(--text-primary)"
                 >
                   {historyLoadingId === decision.id ? "Carregando historico..." : "Ver historico de status"}
                 </button>
                 {decisionHistoryById[decision.id]?.length ? (
-                  <div className="mt-2 space-y-1 rounded-lg border border-(--border) bg-(--bg-muted) p-2 text-[11px] text-(--text-secondary)">
+                  <div className="mt-2 space-y-1 rounded-lg border border-(--border) bg-(--bg-muted) p-2 text-[13px] text-(--text-secondary)">
                     {decisionHistoryById[decision.id].map((item) => (
                       <p key={item.id}>
                         {new Date(item.createdAt).toLocaleString("pt-BR")} | {item.previousStatus ?? "inicio"} -&gt; {item.newStatus} | {item.source}
