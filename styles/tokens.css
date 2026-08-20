@@ -23,5 +23,17 @@
   --warning-soft: #faeeda;
   --danger: #a32d2d;
   --danger-soft: #fcebeb;
+  --danger-border: #f09595;
+  --success-strong: #0f6e56;
+  --success-border: #9fe1cb;
+  --success-deep: #085041;
+  --muted-strong: #b4b2a9;
   --shadow-card: 0 18px 36px -28px rgba(60, 43, 29, 0.26);
+
+  /* Escala tipografica minima para texto operacional (piso de 13px). */
+  --text-2xs: 0.8125rem; /* 13px */
+  --text-xs: 0.875rem;   /* 14px */
+  --text-sm: 0.9375rem;  /* 15px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
 }

@@ -7,10 +7,13 @@ import { DEFAULT_CLIENT_BRAND, ClientBrandSettings } from "@/lib/brand-settings"
 import { canAccessWorkspacePath } from "@/lib/access-control";
 import type { OrganizationRole } from "@/lib/organization-context";
 
+// Voice Room e Dashboard Kairos nao aparecem mais aqui: o Kairos e o "plus"
+// de IA do 7Commander, acessivel de qualquer tela pelo botao flutuante (ver
+// KairosLauncher), nao um modulo de gestao com o mesmo peso de
+// Projetos/Atividades. As rotas /voice e /chat continuam existindo e
+// protegidas pelos mesmos modulos -- so pararam de competir no menu.
 const NAV_ITEMS = [
   { section: "Principal", href: "/", label: "Inicio", module: "" },
-  { section: "Principal", href: "/voice", label: "Voice Room", module: "voice" },
-  { section: "Principal", href: "/chat", label: "Dashboard Kairos", module: "kairos" },
   { section: "Principal", href: "/daily", label: "Daily", module: "daily" },
   { section: "Dados", href: "/clients", label: "Clientes", module: "clients" },
   { section: "Dados", href: "/projects", label: "Projetos", module: "projects" },

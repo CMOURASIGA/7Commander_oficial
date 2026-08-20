@@ -9,6 +9,10 @@ import { getClientAuthHeaders } from "@/lib/client-auth";
 import { applyClientBrandSettings, completeClientBrand, DEFAULT_CLIENT_BRAND, type ClientBrandSettings } from "@/lib/brand-settings";
 import { canAccessWorkspacePath, isWorkspaceModuleEnabled } from "@/lib/access-control";
 import type { OrganizationRole } from "@/lib/organization-context";
+import { KairosCoreProvider } from "@/components/kairos/kairos-core-context";
+import { KairosPanelProvider } from "@/components/kairos/kairos-context";
+import { KairosLauncher } from "@/components/kairos/kairos-launcher";
+import { KairosPanel } from "@/components/kairos/kairos-panel";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -109,13 +113,39 @@ export function AppShell({ children }: AppShellProps) {
 
   if (!canAccessWorkspacePath(organizationRole, pathname) || !isWorkspaceModuleEnabled(pathname, enabledModules)) return <div className="min-h-screen bg-(--bg-page)"><main className="mx-auto flex min-h-screen w-full max-w-2xl items-center justify-center px-4"><section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-(--accent)">Acesso restrito</p><h1 className="mt-3 text-2xl font-semibold">Seu perfil ou contrato não permite acessar esta área</h1><p className="mt-3 text-sm leading-6 text-slate-600">A área pode estar fora dos módulos contratados ou indisponível para seu perfil. Solicite ao responsável ou administrador da empresa.</p><button type="button" onClick={() => router.replace("/")} className="mt-6 rounded-xl bg-(--accent) px-5 py-3 text-sm font-semibold text-white">Voltar ao início</button></section></main></div>;
 
-  return (
+  // O Kairos (chat/voz + Direcionar resposta) so aparece como camada flutuante
+  // quando a empresa contratou o modulo "kairos" (dashboard/chat) ou "voice"
+  // (Voice Room) -- o mesmo nucleo compartilhado atende as duas superficies,
+  // entao a disponibilidade do launcher segue qualquer um dos dois.
+  const kairosChatEnabled = enabledModules.includes("kairos");
+  const kairosVoiceEnabled = enabledModules.includes("voice");
+  const kairosAvailable = kairosChatEnabled || kairosVoiceEnabled;
+
+  const shell = (
     <div className="min-h-screen bg-(--bg-page) md:flex md:items-stretch">
       <Sidebar clientBrand={clientBrand} enabledModules={enabledModules} role={organizationRole} />
       <div className="flex min-h-screen flex-1 flex-col">
         <Header />
         <main className="flex-1 overflow-x-hidden p-4 md:p-5">{children}</main>
       </div>
+      {kairosAvailable ? (
+        <>
+          <KairosLauncher />
+          <KairosPanel />
+        </>
+      ) : null}
     </div>
+  );
+
+  // KairosPanelProvider e sempre montado (e leve: so guarda estado de
+  // aberto/fechado) para que qualquer tela -- ex.: o chip "Kairos" num card
+  // do Kanban -- possa chamar useKairosPanel() sem quebrar quando o modulo
+  // nao esta licenciado; chatEnabled/voiceEnabled deixam essas telas saberem
+  // se devem oferecer o atalho. Ja o KairosCoreProvider (que busca projetos,
+  // conversas etc.) so monta quando o Kairos esta de fato disponivel.
+  return (
+    <KairosPanelProvider chatEnabled={kairosChatEnabled} voiceEnabled={kairosVoiceEnabled}>
+      {kairosAvailable ? <KairosCoreProvider>{shell}</KairosCoreProvider> : shell}
+    </KairosPanelProvider>
   );
 }
