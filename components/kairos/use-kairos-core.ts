@@ -139,6 +139,21 @@ export function getTaskDrafts(content: string): TaskDraft[] {
     });
   }
 
+  // Itens de lista com titulo em negrito e descricao na mesma linha, ex.:
+  // "- **Definicao de Objetivos**: Estabelecer metas claras para o projeto."
+  // O padrao acima (boldItems) exige o negrito sozinho na linha; aqui o
+  // negrito e seguido de ": descricao" no mesmo `- `/`* ` item de lista.
+  const bulletBoldItems = [...content.matchAll(/^\s*[-*]\s*\*\*([^*\n]+)\*\*\s*:?\s*(.*)$/gm)];
+
+  if (bulletBoldItems.length > 1) {
+    return bulletBoldItems.map((item, index) => ({
+      id: `task-bullet-${index + 1}`,
+      title: removeMarkdown(item[1]).replace(/[.:]\s*$/, "") || `Atividade ${index + 1}`,
+      description: removeMarkdown(item[2] ?? ""),
+      selected: true,
+    }));
+  }
+
   return [{
     id: "task-1",
     title: getSuggestedTitle(content, "task"),
@@ -174,6 +189,47 @@ export function createConversationId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}`;
+}
+
+/**
+ * As mensagens em si ja sao persistidas no servidor (/api/conversations),
+ * mas o cliente perdia a referencia de "qual e a conversa em andamento
+ * deste projeto" a cada carregamento novo da pagina -- so sobrevivia
+ * enquanto o React continuasse montado (navegacao dentro do app), nao a
+ * um F5 ou a uma nova aba. Guardamos esse ponteiro por projeto no
+ * localStorage para retomar a mesma conversa ao reabrir o projeto,
+ * mesmo depois de fechar e voltar.
+ */
+function lastConversationKey(projectId: string): string {
+  return `kairos:lastConversation:${projectId}`;
+}
+
+function readLastConversationId(projectId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(lastConversationKey(projectId));
+  } catch {
+    return null;
+  }
+}
+
+function writeLastConversationId(projectId: string, conversationId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(lastConversationKey(projectId), conversationId);
+  } catch {
+    // localStorage indisponivel (modo privado, quota etc.) -- a conversa
+    // continua salva no servidor, so nao retoma automaticamente.
+  }
+}
+
+function clearLastConversationId(projectId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(lastConversationKey(projectId));
+  } catch {
+    // ignore
+  }
 }
 
 function chooseMimeType(): string {
@@ -341,6 +397,24 @@ export function useKairosCore(options?: UseKairosCoreOptions) {
     void loadMessages(conversationId);
   }, [conversationId, isNewConversation, loadMessages]);
 
+  // Ao entrar num projeto (primeira ativacao apos carregar, ou troca manual)
+  // com a conversa ainda "em branco", retoma a ultima conversa salva desse
+  // projeto em vez de comecar do zero -- e o que faz reabrir a tela (ou dar
+  // F5) continuar de onde parou, e nao so navegar dentro do app.
+  const restoredProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canLoadWorkspace || !activeProjectId) return;
+    if (restoredProjectRef.current === activeProjectId) return;
+    restoredProjectRef.current = activeProjectId;
+    if (!isNewConversation || hasMessages) return;
+    const savedConversationId = readLastConversationId(activeProjectId);
+    if (savedConversationId && savedConversationId !== conversationId) {
+      setConversationId(savedConversationId);
+      setIsNewConversation(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProjectId, canLoadWorkspace]);
+
   function clearVoiceCaptureResources() {
     if (silenceFrameRef.current) { cancelAnimationFrame(silenceFrameRef.current); silenceFrameRef.current = null; }
     if (audioContextRef.current) { void audioContextRef.current.close(); audioContextRef.current = null; }
@@ -356,17 +430,19 @@ export function useKairosCore(options?: UseKairosCoreOptions) {
   }
 
   const startNewConversation = useCallback(() => {
+    if (activeProjectId) clearLastConversationId(activeProjectId);
     setConversationId(createConversationId());
     setMessages([]);
     setIsNewConversation(true);
     setError(null);
-  }, []);
+  }, [activeProjectId]);
 
   const selectConversation = useCallback((item: ConversationMeta) => {
     setConversationId(item.id);
     setActiveProjectId(item.projectId);
     setIsNewConversation(false);
     setError(item.projectId ? null : "Conversa antiga sem projeto vinculado. Inicie uma nova conversa.");
+    if (item.projectId) writeLastConversationId(item.projectId, item.id);
   }, []);
 
   const activateProject = useCallback(async (projectId: string) => {
@@ -484,12 +560,16 @@ export function useKairosCore(options?: UseKairosCoreOptions) {
       const assistantMessage = { ...(payload?.data?.message as KairosMessage), source };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsNewConversation(false);
+      if (activeProjectId) writeLastConversationId(activeProjectId, activeConversationId);
       await refreshConversations();
       addSessionEvent(setSessionMemory, "Resposta operacional gerada para o projeto ativo.");
 
       const projectMeta = payload?.data?.project as KairosProjectMeta | undefined;
       if (projectMeta?.action === "created" || projectMeta?.action === "reused") {
-        if (projectMeta.id) setActiveProjectId(projectMeta.id);
+        if (projectMeta.id) {
+          setActiveProjectId(projectMeta.id);
+          writeLastConversationId(projectMeta.id, activeConversationId);
+        }
         await reloadProjects();
         addSessionEvent(setSessionMemory, `Contexto sincronizado com ${projectMeta.name ?? "o projeto ativo"}.`);
       }
